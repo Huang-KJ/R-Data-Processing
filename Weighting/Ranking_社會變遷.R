@@ -6,6 +6,7 @@ library(haven)
 library(tidyr)
 library(expss)
 library(survey)
+library(weights)
 library(stringr)
 library(data.table)
 
@@ -62,3 +63,7 @@ Sample$weights <- weights(raking)
 #使用卡方檢定檢查加權後分佈情形#
 chisq.test(wpct(Sample$Sex, Sample$weights), p = as.numeric(sex[2, ]))
 chisq.test(wpct(Sample$Age, Sample$weights), p = round(as.numeric(age[2, ]), 2))
+
+#檢視駕照比例#
+table(tscs201$v118)
+wpct(tscs201$v118, Sample$weights)

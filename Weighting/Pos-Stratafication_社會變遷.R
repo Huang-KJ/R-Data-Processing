@@ -17,11 +17,11 @@ tscs201 <- tscs201[, Sex := factor(x = v1, levels = c(1:2), labels = c("男", "�
 tscs201 <- apply_labels(data = tscs201, Sex = "性別")
 
 tscs201 <- (copy(tscs201)
-            [v2y < 100, Age := 110 - v2y]
+            [v2y < 100, Age := 109 - v2y]
             [v2y > 100, Age := grep("[0-9]", v2r)]
             [, Age := Recode(Age, recodes = '18:29="18-29歲"; 30:39="30-39歲";
-                                                40:49="40-49歲"; 50:59="50-59歲";
-                                                60:69="60-69歲"; else="70歲以上"')])
+                                             40:49="40-49歲"; 50:59="50-59歲";
+                                             60:69="60-69歲"; else="70歲以上"')])
 tscs201 <- apply_labels(data = tscs201, Age = "年齡")
 
 Sample <- tscs201[, .(Sex, Age, id = c(1:nrow(tscs201)))]
@@ -40,10 +40,9 @@ popByAge <- (popByAge[, .(Area = str_sub(區域別, 1, 3),
                           Sex = str_extract(string = Group, pattern = "[男女]$"), 
                           年齡 = as.numeric(str_extract(string = Group, pattern = "(^[0-9]{1,3})")),
                           人口數 = as.numeric(Population))]
-             [年齡 >= 18 , Age := Recode(年齡,
-                                       recodes = '18:29="18-29歲"; 30:39="30-39歲";
-                                                            40:49="40-49歲"; 50:59="50-59歲";
-                                                            60:69="60-69歲"; else="70歲以上"')])
+                     [年齡 >= 18 , Age := Recode(年齡, recodes = '18:29="18-29歲"; 30:39="30-39歲";
+                                                                  40:49="40-49歲"; 50:59="50-59歲";
+                                                                  60:69="60-69歲"; else="70歲以上"')])
 
 Population <- popByAge[年齡 >= 18, .(人口數 = sum(人口數)), by = .(Sex, Age)]
 sex <- Population[, .(人口數比例 = 人口數 / sum(人口數), Sex)][, .(Freq = sum(人口數比例)), by = .(Sex)] |> t()
@@ -54,8 +53,20 @@ chisq.test(table(tscs201$Sex), p = as.numeric(sex[2, ]))
 chisq.test(table(tscs201$Age), p = round(as.numeric(age[2, ]), 2))
 
 #進行多變數反覆加權#
-CT <- table(Sample$Sex, Sample$Age)
-CT <- addmargins(round(prop.table(CT), 2))
+jointDisSam <- table(Sample$Sex, Sample$Age)
+jointDisSam <- round(prop.table(jointDisSam), 3) |> as.data.table()
+jointDisSam <- dcast(jointDisSam, V1 ~ V2, value.var="N")[, -1] |> as.data.frame()
+row.names(jointDisSam) <- c('男', '女')
+
+jointDisPop <- dcast(Population, Sex ~ Age, value.var="人口數")[, -1] |> as.data.frame()
+row.names(jointDisPop) <- c('男', '女')
+jointDisPop <- (jointDisPop / sum(sum(jointDisPop[1, ]) + sum(jointDisPop[2, ]))) |> round(3)
+
+psWeight <- (jointDisPop / jointDisSam) |> round(3)
+
+jointDisSam
+jointDisPop
+psWeight
 
 strata<-c("")
 strata[Sample$Sex=="男" & Sample$Age=="18-29歲"] <- 1
@@ -75,14 +86,20 @@ strata <- factor(strata, levels = c(1:12))
 Sample <- cbind(Sample, strata)
 
 Population$Freq <- Population$人口數 / sum(Population$人口數)
-joint_population <- data.frame(strata = c(1:12),
-                               percent = c(0.09363268, 0.08794697, 0.09298987, 0.08928223, 0.07505539, 0.05210569,
-                                           0.08657803, 0.08644110, 0.09636962, 0.09278977, 0.08151928, 0.06528937))
+jointPop <- data.frame(strata = c(1:12),
+                       percent = c(0.09363268, 0.08794697, 0.09298987, 0.08928223, 0.07505539, 0.05210569,
+                                   0.08657803, 0.08644110, 0.09636962, 0.09278977, 0.08151928, 0.06528937))
 
 unweighted <- svydesign(ids =  ~ 1, data = Sample)
-ps <- postStratify(design = unweighted, strata =  ~ strata, population = joint_population)
+ps <- postStratify(design = unweighted, strata =  ~ strata, population = jointPop)
 stack(table(weights(ps)))
 Sample$weights<-weights(ps)
+
+ww <- data.frame(strata = factor(c(1:12), levels = c(1:12)), 
+                 w = c(1.475, 1.036, 0.980, 0.775, 0.837, 0.747, 
+                       1.362, 1.114, 1.057, 1.023, 0.987, 0.929))
+Sample <- dplyr::left_join(Sample, ww)
+
 
 #使用卡方檢定檢查加權後分佈情形#
 chisq.test(wpct(Sample$Sex, Sample$weights), p = as.numeric(sex[2, ]))
