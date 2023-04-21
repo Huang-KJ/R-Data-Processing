@@ -1,0 +1,154 @@
+---
+format: 
+  html: 
+    toc: true
+    toc-title: Contents
+    toc-location: right
+    page-layout: full
+    code-overflow: wrap
+editor: visual
+---
+
+# 加權（Weighting）
+
+**加權**是將樣本資料根據特定變項給予新的權數，以調整每個樣本佔整體資料的比例。
+
+本文使用到的套件如下：
+
+```{r, message=FALSE}
+library(car)
+library(haven)
+library(tidyr)
+library(expss)
+library(survey)
+library(weights)
+library(stringr)
+library(data.table)
+```
+
+### 樣本資料
+
+此處我們使用2020台灣社會變遷綜合問卷進行示範
+
+匯入資料檔並進行變項處理：
+
+```{r, echo = FALSE}
+path1 <- "/Users/kyle/Desktop/NCCU/111-2/三1234社會研究方法/HW/"
+```
+
+```{r, warning=FALSE}
+tscs201 <- read_dta(paste0(path1, 'tscs201.dta')) |> setDT()
+tscs201 <- tscs201[, Sex := factor(x = v1, levels = c(1:2), labels = c("男", "女"))]
+tscs201 <- apply_labels(data = tscs201, Sex = "性別")
+
+tscs201 <- (copy(tscs201)
+            [v2y < 100, Age := 109 - v2y]
+            [v2y > 100, Age := grep("[0-9]", v2r)]
+            [, Age := Recode(Age, recodes = '18:29="18-29歲"; 30:39="30-39歲";
+                                             40:49="40-49歲"; 50:59="50-59歲";
+                                             60:69="60-69歲"; else="70歲以上"')])
+tscs201 <- apply_labels(data = tscs201, Age = "年齡")
+
+Sample <- tscs201[, .(Sex, Age)]
+```
+
+### 母體資料
+
+使用內政部戶政司所公布之109年12月村里戶數、單一年齡人口統計資料作為母體資料
+
+```{r, echo = FALSE}
+path2 <- '/Users/kyle/Desktop/NCCU/社會調查師/R-Data-Processing/DataSets/'
+```
+
+```{r, warning=FALSE}
+pop <- read.csv(paste0(path2, "10912村里戶數、單一年齡人口.csv"), skip = 1)
+names(pop) <- str_replace_all(string = names(pop), pattern = c("X" = "", "\\." = ""))
+pop <- subset(x = pop, select = -c(統計年月, 戶數, 人口數, 人口數男, 人口數女))
+
+popByAge <- pivot_longer(data = pop, 
+                         cols = str_subset(string = names(pop), pattern = "^[0-9]"), 
+                         names_to = "Group", values_to = "Population") |> setDT()
+
+popByAge <- (popByAge[, .(Area = str_sub(區域別, 1, 3), 
+                          Sex = str_extract(string = Group, pattern = "[男女]$"), 
+                          年齡 = as.numeric(str_extract(string = Group, pattern = "(^[0-9]{1,3})")),
+                          人口數 = as.numeric(Population))]
+                     [年齡 >= 18, ]
+                     [, Age := Recode(年齡, recodes = '18:29="18-29歲"; 30:39="30-39歲";
+                                                                  40:49="40-49歲"; 50:59="50-59歲";
+                                                                  60:69="60-69歲"; else="70歲以上"')])
+
+Population <- popByAge[, .(人口數 = sum(人口數)), by = .(Sex, Age)]
+sex <- Population[, .(人口數比例 = 人口數 / sum(人口數), Sex)][, .(Freq = sum(人口數比例)), by = .(Sex)] |> t()
+age <- Population[, .(人口數比例 = 人口數 / sum(人口數), Age)][, .(Freq = sum(人口數比例)), by = .(Age)] |> t()
+```
+
+### 使用卡方檢定檢查分佈情形
+
+我們使用`chisq.test()`來檢查樣本資料分佈的比例是否與母體資料相符（Goodness-of-Fit），其中要檢測的變相為**性別**及**年齡組**，因此以`table()`取得兩個變項的次數分佈，並將p設定為母體的比例。
+
+```{r}
+chisq.test(table(tscs201$Sex), p = as.numeric(sex[2, ]))
+chisq.test(table(tscs201$Age), p = round(as.numeric(age[2, ]), 2))
+```
+
+經過卡方檢定可以發現，無論是性別或年齡組，樣本與母體都有顯著差異（p-value\<0.05），因此需要對樣本資料進行加權，首先我們採用**事後分層加權**（Post-Stratification）。
+
+## 事後分層加權（Post-Stratification）
+
+事後分層加權是將樣本依不同人口特徵分層以後，以母體的各層比例對樣本各層比例進行加權的方法，各層的比例即是變相間的**聯合機率分布**。
+
+權數的計算方式是以各層母體比例($P_i$)除以各層樣本比例($p_i$)：
+
+$$W_i=P_i/p_i$$
+
+接下來要檢視母體各層的比例：
+
+```{r}
+jointDisPop <- dcast(Population, Sex ~ Age, value.var="人口數")[, -1] |> as.data.frame()
+row.names(jointDisPop) <- c('男', '女')
+jointDisPop <- (jointDisPop / sum(sum(jointDisPop[1, ]) + sum(jointDisPop[2, ]))) |> round(3)
+jointDisPop
+```
+
+以及樣本各層的比例：
+
+```{r}
+jointDisSam <- table(Sample$Sex, Sample$Age)
+jointDisSam <- round(prop.table(jointDisSam), 3) |> as.data.table()
+jointDisSam <- dcast(jointDisSam, V1 ~ V2, value.var="N")[, -1] |> as.data.frame()
+row.names(jointDisSam) <- c('男', '女')
+jointDisSam
+```
+
+透過前述的計算方式，我們可以得出每一層的權數為：
+
+```{r}
+psWeight <- (jointDisPop / jointDisSam) |> round(3)
+psWeight
+```
+
+接下來要將計算出來的權數依據性別及年齡分派給每一個樣本
+
+```{r, message=FALSE}
+psWeight <- tibble::rownames_to_column(psWeight, var = "Sex") |> 
+            pivot_longer(!Sex, names_to = "Age", values_to = "Weight")
+
+SamplePS <- Sample[, ":="(Sex = as.character(Sex), Age = as.character(Age))]
+
+SamplePS <- dplyr::left_join(SamplePS, psWeight)
+SamplePS
+```
+
+### 使用卡方檢定檢查分佈情形
+
+現在可以再次使用卡方檢定來檢查加權後的次數分佈有沒有符合母體分佈情形，使用`wpct()`來查看加權後的次數分佈。
+
+```{r, warning=FALSE}
+chisq.test(wpct(SamplePS$Sex, SamplePS$Weight), p = as.numeric(sex[2, ]))
+chisq.test(wpct(SamplePS$Age, SamplePS$Weight), p = round(as.numeric(age[2, ]), 2))
+```
+
+透過卡方檢定的結果可以發現，無論是性別或是年齡組，p-value都大於0.05，樣本與母體沒有顯著差異，事後分層加權就正式完成了。
+
+## 多變項反覆加權（Raking）

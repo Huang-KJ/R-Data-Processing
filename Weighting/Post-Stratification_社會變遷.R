@@ -24,7 +24,7 @@ tscs201 <- (copy(tscs201)
                                              60:69="60-69歲"; else="70歲以上"')])
 tscs201 <- apply_labels(data = tscs201, Age = "年齡")
 
-Sample <- tscs201[, .(Sex, Age, id = c(1:nrow(tscs201)))]
+Sample <- tscs201[, .(Sex, Age)]
 
 #匯入人口母體資料#
 setwd('/Users/kyle/Desktop/NCCU/社會調查師/R-Data-Processing/DataSets')
@@ -40,11 +40,12 @@ popByAge <- (popByAge[, .(Area = str_sub(區域別, 1, 3),
                           Sex = str_extract(string = Group, pattern = "[男女]$"), 
                           年齡 = as.numeric(str_extract(string = Group, pattern = "(^[0-9]{1,3})")),
                           人口數 = as.numeric(Population))]
-                     [年齡 >= 18 , Age := Recode(年齡, recodes = '18:29="18-29歲"; 30:39="30-39歲";
+                     [年齡 >= 18, ]
+                     [, Age := Recode(年齡, recodes = '18:29="18-29歲"; 30:39="30-39歲";
                                                                   40:49="40-49歲"; 50:59="50-59歲";
                                                                   60:69="60-69歲"; else="70歲以上"')])
 
-Population <- popByAge[年齡 >= 18, .(人口數 = sum(人口數)), by = .(Sex, Age)]
+Population <- popByAge[, .(人口數 = sum(人口數)), by = .(Sex, Age)]
 sex <- Population[, .(人口數比例 = 人口數 / sum(人口數), Sex)][, .(Freq = sum(人口數比例)), by = .(Sex)] |> t()
 age <- Population[, .(人口數比例 = 人口數 / sum(人口數), Age)][, .(Freq = sum(人口數比例)), by = .(Age)] |> t()
 
@@ -68,6 +69,13 @@ jointDisSam
 jointDisPop
 psWeight
 
+psWeight <- tibble::rownames_to_column(psWeight, var = "Sex") |> 
+            pivot_longer(!Sex, names_to = "Age", values_to = "Weight")
+
+Sample <- Sample[, ":="(Sex = as.character(Sex), Age = as.character(Age))]
+
+Sample <- dplyr::left_join(Sample, psWeight)
+
 strata<-c("")
 strata[Sample$Sex=="男" & Sample$Age=="18-29歲"] <- 1
 strata[Sample$Sex=="男" & Sample$Age=="30-39歲"] <- 2
@@ -90,16 +98,10 @@ jointPop <- data.frame(strata = c(1:12),
                        percent = c(0.09363268, 0.08794697, 0.09298987, 0.08928223, 0.07505539, 0.05210569,
                                    0.08657803, 0.08644110, 0.09636962, 0.09278977, 0.08151928, 0.06528937))
 
-unweighted <- svydesign(ids =  ~ 1, data = Sample)
+unweighted <- svydesign(ids = ~ 1, data = Sample)
 ps <- postStratify(design = unweighted, strata =  ~ strata, population = jointPop)
 stack(table(weights(ps)))
-Sample$weights<-weights(ps)
-
-ww <- data.frame(strata = factor(c(1:12), levels = c(1:12)), 
-                 w = c(1.475, 1.036, 0.980, 0.775, 0.837, 0.747, 
-                       1.362, 1.114, 1.057, 1.023, 0.987, 0.929))
-Sample <- dplyr::left_join(Sample, ww)
-
+Sample$weights <- weights(ps)
 
 #使用卡方檢定檢查加權後分佈情形#
 chisq.test(wpct(Sample$Sex, Sample$weights), p = as.numeric(sex[2, ]))
