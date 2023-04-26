@@ -100,7 +100,7 @@ chisq.test(table(tscs201$Age), p = round(as.numeric(age[2, ]), 2))
 
 權數的計算方式是以各層母體比例($P_i$)除以各層樣本比例($p_i$)：
 
-$$W_i=P_i/p_i$$
+$$W_i=\frac{P_i}{p_i}$$
 
 接下來要檢視母體各層的比例：
 
@@ -152,3 +152,38 @@ chisq.test(wpct(SamplePS$Age, SamplePS$Weight), p = round(as.numeric(age[2, ]), 
 透過卡方檢定的結果可以發現，無論是性別或是年齡組，p-value都大於0.05，樣本與母體沒有顯著差異，事後分層加權就正式完成了。
 
 ## 多變項反覆加權（Raking）
+
+多變項反覆加權是利用不同變項的比例逐一進行加權，直到符合母體分佈的加權方法，單一變項的權數計算方式如下。
+
+$$W_i=\frac{N_i}{N}*\frac{n}{n_i}$$
+
+多變項反覆加權需要使用`survey`套件，首先用`svydesign()`建立一的尚未加權的資料集，並計算出母體的期望值。
+
+```{r}
+SampleRK <- tscs201[, .(Sex, Age)]
+Unweighted <- svydesign(ids = ~ 0, data = SampleRK)
+
+sex2 <- Population[, .(人口數比例 = 人口數 / sum(人口數), Sex)][, .(Freq = nrow(SampleRK) * sum(人口數比例)), by = .(Sex)]
+age2 <- Population[, .(人口數比例 = 人口數 / sum(人口數), Age)][, .(Freq = nrow(SampleRK) * sum(人口數比例)), by = .(Age)]
+```
+
+接著使用母體期望值進行加權，`sample.margins`為樣本資料的欄位，`population.margins`為母體資料的欄位。
+
+```{r}
+raking <- rake(design = Unweighted, sample.margins = list(~ Sex, ~ Age), 
+               population.margins = list(sex2, age2))
+SampleRK$Weight <- weights(raking)
+```
+
+### 使用卡方檢定檢查分佈情形
+
+現在可以再次使用卡方檢定來檢查加權後的次數分佈有沒有符合母體分佈情形，使用`wpct()`來查看加權後的次數分佈。
+
+```{r, warning=FALSE}
+chisq.test(wpct(SampleRK$Sex, SampleRK$weights), p = as.numeric(sex[2, ]))
+chisq.test(wpct(SampleRK$Age, SampleRK$weights), p = round(as.numeric(age[2, ]), 2))
+```
+
+透過卡方檢定的結果可以發現，無論是性別或是年齡組，p-value都大於0.05，樣本與母體沒有顯著差異，多變項反覆加權就正式完成了。
+
+## 檢驗駕照持有人數

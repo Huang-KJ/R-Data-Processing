@@ -1,7 +1,8 @@
 ################
-# 多層反覆加權 #
+# 多變項反覆加權 #
 ################
 library(car)
+library(XML)
 library(haven)
 library(tidyr)
 library(expss)
@@ -65,5 +66,13 @@ chisq.test(wpct(Sample$Sex, Sample$weights), p = as.numeric(sex[2, ]))
 chisq.test(wpct(Sample$Age, Sample$weights), p = round(as.numeric(age[2, ]), 2))
 
 #檢視駕照比例#
-table(tscs201$v118)
+setwd('/Users/kyle/Desktop/NCCU/社會調查師/R-Data-Processing/DataSets')
+license <- xmlToDataFrame('領有駕駛執照人數.XML') |> setDT()
+license <- license[Category1Title == '小型車普通駕駛人' & Category2Title %in% c('男', '女') & Category3Title != '計', ]
+
+
+#devtools::install_github("rstudio/addinexamples", type = "source")
+
+prop.table(table(tscs201$v118))
 wpct(tscs201$v118, Sample$weights)
+

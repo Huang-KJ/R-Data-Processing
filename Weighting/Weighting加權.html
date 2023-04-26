@@ -118,7 +118,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <ul class="collapse">
   <li><a href="#使用卡方檢定檢查分佈情形-1" id="toc-使用卡方檢定檢查分佈情形-1" class="nav-link" data-scroll-target="#使用卡方檢定檢查分佈情形-1">使用卡方檢定檢查分佈情形</a></li>
   </ul></li>
-  <li><a href="#多變項反覆加權raking" id="toc-多變項反覆加權raking" class="nav-link" data-scroll-target="#多變項反覆加權raking">多變項反覆加權（Raking）</a></li>
+  <li><a href="#多變項反覆加權raking" id="toc-多變項反覆加權raking" class="nav-link" data-scroll-target="#多變項反覆加權raking">多變項反覆加權（Raking）</a>
+  <ul class="collapse">
+  <li><a href="#使用卡方檢定檢查分佈情形-2" id="toc-使用卡方檢定檢查分佈情形-2" class="nav-link" data-scroll-target="#使用卡方檢定檢查分佈情形-2">使用卡方檢定檢查分佈情形</a></li>
+  </ul></li>
+  <li><a href="#檢驗駕照持有人數" id="toc-檢驗駕照持有人數" class="nav-link" data-scroll-target="#檢驗駕照持有人數">檢驗駕照持有人數</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -220,7 +224,7 @@ X-squared = 47.186, df = 5, p-value = 5.207e-09</code></pre>
 <h2 class="anchored" data-anchor-id="事後分層加權post-stratification">事後分層加權（Post-Stratification）</h2>
 <p>事後分層加權是將樣本依不同人口特徵分層以後，以母體的各層比例對樣本各層比例進行加權的方法，各層的比例即是變相間的<strong>聯合機率分布</strong>。</p>
 <p>權數的計算方式是以各層母體比例(<span class="math inline">\(P_i\)</span>)除以各層樣本比例(<span class="math inline">\(p_i\)</span>)：</p>
-<p><span class="math display">\[W_i=P_i/p_i\]</span></p>
+<p><span class="math display">\[W_i=\frac{P_i}{p_i}\]</span></p>
 <p>接下來要檢視母體各層的比例：</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>jointDisPop <span class="ot">&lt;-</span> <span class="fu">dcast</span>(Population, Sex <span class="sc">~</span> Age, <span class="at">value.var=</span><span class="st">"人口數"</span>)[, <span class="sc">-</span><span class="dv">1</span>] <span class="sc">|&gt;</span> <span class="fu">as.data.frame</span>()</span>
@@ -306,6 +310,51 @@ X-squared = 0.00044177, df = 5, p-value = 1</code></pre>
 </section>
 <section id="多變項反覆加權raking" class="level2">
 <h2 class="anchored" data-anchor-id="多變項反覆加權raking">多變項反覆加權（Raking）</h2>
+<p>多變項反覆加權是利用不同變項的比例逐一進行加權，直到符合母體分佈的加權方法，單一變項的權數計算方式如下。</p>
+<p><span class="math display">\[W_i=\frac{N_i}{N}*\frac{n}{n_i}\]</span></p>
+<p>多變項反覆加權需要使用<code>survey</code>套件，首先用<code>svydesign()</code>建立一的尚未加權的資料集，並計算出母體的期望值。</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>SampleRK <span class="ot">&lt;-</span> tscs201[, .(Sex, Age)]</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>Unweighted <span class="ot">&lt;-</span> <span class="fu">svydesign</span>(<span class="at">ids =</span> <span class="sc">~</span> <span class="dv">0</span>, <span class="at">data =</span> SampleRK)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in svydesign.default(ids = ~0, data = SampleRK): No weights or
+probabilities supplied, assuming equal probability</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>sex2 <span class="ot">&lt;-</span> Population[, .(人口數比例 <span class="ot">=</span> 人口數 <span class="sc">/</span> <span class="fu">sum</span>(人口數), Sex)][, .(<span class="at">Freq =</span> <span class="fu">nrow</span>(SampleRK) <span class="sc">*</span> <span class="fu">sum</span>(人口數比例)), by <span class="ot">=</span> .(Sex)]</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>age2 <span class="ot">&lt;-</span> Population[, .(人口數比例 <span class="ot">=</span> 人口數 <span class="sc">/</span> <span class="fu">sum</span>(人口數), Age)][, .(<span class="at">Freq =</span> <span class="fu">nrow</span>(SampleRK) <span class="sc">*</span> <span class="fu">sum</span>(人口數比例)), by <span class="ot">=</span> .(Age)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>接著使用母體期望值進行加權，<code>sample.margins</code>為樣本資料的欄位，<code>population.margins</code>為母體資料的欄位。</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>raking <span class="ot">&lt;-</span> <span class="fu">rake</span>(<span class="at">design =</span> Unweighted, <span class="at">sample.margins =</span> <span class="fu">list</span>(<span class="sc">~</span> Sex, <span class="sc">~</span> Age), </span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">population.margins =</span> <span class="fu">list</span>(sex2, age2))</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>SampleRK<span class="sc">$</span>Weight <span class="ot">&lt;-</span> <span class="fu">weights</span>(raking)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="使用卡方檢定檢查分佈情形-2" class="level3">
+<h3 class="anchored" data-anchor-id="使用卡方檢定檢查分佈情形-2">使用卡方檢定檢查分佈情形</h3>
+<p>現在可以再次使用卡方檢定來檢查加權後的次數分佈有沒有符合母體分佈情形，使用<code>wpct()</code>來查看加權後的次數分佈。</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(<span class="fu">wpct</span>(SampleRK<span class="sc">$</span>Sex, SampleRK<span class="sc">$</span>weights), <span class="at">p =</span> <span class="fu">as.numeric</span>(sex[<span class="dv">2</span>, ]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Chi-squared test for given probabilities
+
+data:  wpct(SampleRK$Sex, SampleRK$weights)
+X-squared = 0.0051932, df = 1, p-value = 0.9426</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(<span class="fu">wpct</span>(SampleRK<span class="sc">$</span>Age, SampleRK<span class="sc">$</span>weights), <span class="at">p =</span> <span class="fu">round</span>(<span class="fu">as.numeric</span>(age[<span class="dv">2</span>, ]), <span class="dv">2</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Chi-squared test for given probabilities
+
+data:  wpct(SampleRK$Age, SampleRK$weights)
+X-squared = 0.025437, df = 5, p-value = 1</code></pre>
+</div>
+</div>
+<p>透過卡方檢定的結果可以發現，無論是性別或是年齡組，p-value都大於0.05，樣本與母體沒有顯著差異，多變項反覆加權就正式完成了。</p>
+</section>
+</section>
+<section id="檢驗駕照持有人數" class="level2">
+<h2 class="anchored" data-anchor-id="檢驗駕照持有人數">檢驗駕照持有人數</h2>
 </section>
 </section>
 
