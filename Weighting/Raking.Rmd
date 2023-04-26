@@ -1,3 +1,15 @@
+---
+title: "Raking"
+author: "黃楷捷"
+date: "2023-04-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE}
 ##################
 # 多變項反覆加權 #
 ##################
@@ -10,7 +22,10 @@ library(survey)
 library(weights)
 library(stringr)
 library(data.table)
+```
 
+
+```{r}
 ############
 # 調查資料 #
 ############
@@ -71,17 +86,6 @@ age2 <- Population[, .(人口數比例 = 人口數 / sum(人口數), Age)][, .(F
 # 反覆加權 #
 ############
 
-## 使用survey套件進行反覆加權 ##
-unweighted <- svydesign(ids = ~ 0, data = Sample)
-raking <- rake(design = unweighted, sample.margins = list(~ Sex, ~ Age), 
-               population.margins = list(sex2, age2))
-Sample$weights <- weights(raking)
-
-# 使用卡方檢定檢查加權後分佈情形 #
-chisq.test(wpct(Sample$Sex, Sample$weights) * nrow(Sample), p = as.numeric(sex[2, ]))
-chisq.test(wpct(Sample$Age, Sample$weights) * nrow(Sample), p = round(as.numeric(age[2, ]), 2))
-
-
 ## 手動進行反覆加權 ##
 # 加權性別 #
 sex3 <- prop.table(table(Sample$Sex)) |> data.frame() |> t()
@@ -120,45 +124,5 @@ chisq.test(wpct(Sample$Age, Sample$weights2) * nrow(Sample), p = round(as.numeri
 ###################
 table(Sample$TW)
 (wpct(Sample$TW, Sample$weights) * nrow(Sample)) |> round(1)
+```
 
-################
-# 檢視駕照比例 #
-################
-
-# 計算母體不同年齡及性別持有駕照人數 #
-setwd('/Users/kyle/Desktop/NCCU/社會調查師/R-Data-Processing/DataSets')
-license <- xmlToDataFrame('領有駕駛執照人數2.XML') |> setDT()
-license <- (license[Category1Title == '小型車普通駕駛人' & Category2Title %in% c('男', '女') & Category3Title != '計', ]
-                   [, ":="(Sex = factor(Category2Title, levels = c('男', '女')),
-                           Age = Recode(Category3Title, "c('未滿20歲', '20-未滿25歲', '25-未滿30歲')='18-29歲';
-                                                         c('30-未滿35歲', '35-未滿40歲')='30-39歲';
-                                                         c('40-未滿45歲', '45-未滿50歲')='40-49歲';
-                                                         c('50-未滿55歲', '55-未滿60歲')='50-59歲';
-                                                         '60歲以上'='60歲以上'"))])
-# 調整樣本編碼 #
-Sample$Age2 <- ifelse(Sample$Age %in% c('60-69歲', '70歲以上'), '60歲以上', Sample$Age)
-
-# 比較母體及樣本 #
-license <- license[Period == '11000', .(人數 = sum(as.numeric(Val))), keyby = .(Sex, Age)][, 比例 := 人數 / sum(人數)][]
-
-Sample2 <- Sample[License == 1, .(人數 = .N, 加權人數 = sum(weights)), keyby = .(Sex, Age2)][]
-
-# 檢查加權前後差異 #
-chisq.test(Sample2$人數, p = license$比例)
-chisq.test(Sample2$加權人數, p = license$比例)
-
-# 計算全體有無駕照比例 #
-l.Unweighted <- table(tscs201$v118)
-l.Weighted <- wpct(tscs201$v118, Sample$weights) * 1854
-
-有駕照比例 <- sum(license$人數) / sum(Population$人口數)
-沒駕照比例 <- (sum(Population$人口數) - sum(license$人數)) / sum(Population$人口數)
-
-l.stat <- data.frame(a = 有駕照比例 * 1854,  b = 沒駕照比例 * 1854)
-
-# 檢查加權前後差異 #
-chisq.test(l.Unweighted, p = c(有駕照比例, 沒駕照比例))
-chisq.test(l.Weighted, p = c(有駕照比例, 沒駕照比例))
-
-
-#devtools::install_github("rstudio/addinexamples", type = "source")
