@@ -56,10 +56,10 @@ chisq.test(table(tscs201$Age), p = round(as.numeric(age[2, ]), 2))
 #進行多變數反覆加權#
 jointDisSam <- table(Sample$Sex, Sample$Age)
 jointDisSam <- round(prop.table(jointDisSam), 3) |> as.data.table()
-jointDisSam <- dcast(jointDisSam, V1 ~ V2, value.var="N")[, -1] |> as.data.frame()
+jointDisSam <- dcast(jointDisSam, V1 ~ V2, value.var="N")[, -1][c(2, 1), ] |> as.data.frame()
 row.names(jointDisSam) <- c('男', '女')
 
-jointDisPop <- dcast(Population, Sex ~ Age, value.var="人口數")[, -1] |> as.data.frame()
+jointDisPop <- dcast(Population, Sex ~ Age, value.var="人口數")[, -1][c(2, 1), ] |> as.data.frame()
 row.names(jointDisPop) <- c('男', '女')
 jointDisPop <- (jointDisPop / sum(sum(jointDisPop[1, ]) + sum(jointDisPop[2, ]))) |> round(3)
 
@@ -72,9 +72,10 @@ psWeight
 psWeight <- tibble::rownames_to_column(psWeight, var = "Sex") |> 
             pivot_longer(!Sex, names_to = "Age", values_to = "Weight")
 
-Sample <- Sample[, ":="(Sex = as.character(Sex), Age = as.character(Age))]
+Sample <- merge(Sample, psWeight, by = c('Sex', 'Age'))
 
-Sample <- dplyr::left_join(Sample, psWeight)
+chisq.test(wpct(Sample$Sex, Sample$Weight) * nrow(Sample), p = as.numeric(sex[2, ]))
+chisq.test(wpct(Sample$Age, Sample$Weight) * nrow(Sample), p = round(as.numeric(age[2, ]), 2))
 
 strata<-c("")
 strata[Sample$Sex=="男" & Sample$Age=="18-29歲"] <- 1

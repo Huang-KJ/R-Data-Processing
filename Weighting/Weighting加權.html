@@ -111,16 +111,22 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <ul>
   <li><a href="#加權weighting" id="toc-加權weighting" class="nav-link active" data-scroll-target="#加權weighting">加權（Weighting）</a>
   <ul class="collapse">
+  <li><a href="#套件與資料" id="toc-套件與資料" class="nav-link" data-scroll-target="#套件與資料">套件與資料</a>
+  <ul class="collapse">
   <li><a href="#樣本資料" id="toc-樣本資料" class="nav-link" data-scroll-target="#樣本資料">樣本資料</a></li>
   <li><a href="#母體資料" id="toc-母體資料" class="nav-link" data-scroll-target="#母體資料">母體資料</a></li>
   <li><a href="#使用卡方檢定檢查分佈情形" id="toc-使用卡方檢定檢查分佈情形" class="nav-link" data-scroll-target="#使用卡方檢定檢查分佈情形">使用卡方檢定檢查分佈情形</a></li>
+  </ul></li>
   <li><a href="#事後分層加權post-stratification" id="toc-事後分層加權post-stratification" class="nav-link" data-scroll-target="#事後分層加權post-stratification">事後分層加權（Post-Stratification）</a>
   <ul class="collapse">
   <li><a href="#使用卡方檢定檢查分佈情形-1" id="toc-使用卡方檢定檢查分佈情形-1" class="nav-link" data-scroll-target="#使用卡方檢定檢查分佈情形-1">使用卡方檢定檢查分佈情形</a></li>
+  <li><a href="#挑選變項檢視分佈-v41台灣社會發展" id="toc-挑選變項檢視分佈-v41台灣社會發展" class="nav-link" data-scroll-target="#挑選變項檢視分佈-v41台灣社會發展">挑選變項檢視分佈-v41台灣社會發展</a></li>
   </ul></li>
   <li><a href="#多變項反覆加權raking" id="toc-多變項反覆加權raking" class="nav-link" data-scroll-target="#多變項反覆加權raking">多變項反覆加權（Raking）</a>
   <ul class="collapse">
-  <li><a href="#使用卡方檢定檢查分佈情形-2" id="toc-使用卡方檢定檢查分佈情形-2" class="nav-link" data-scroll-target="#使用卡方檢定檢查分佈情形-2">使用卡方檢定檢查分佈情形</a></li>
+  <li><a href="#使用survey套件進行加權" id="toc-使用survey套件進行加權" class="nav-link" data-scroll-target="#使用survey套件進行加權">使用survey套件進行加權</a></li>
+  <li><a href="#手動反覆加權" id="toc-手動反覆加權" class="nav-link" data-scroll-target="#手動反覆加權">手動反覆加權</a></li>
+  <li><a href="#挑選變項檢視分佈-v41台灣社會發展-1" id="toc-挑選變項檢視分佈-v41台灣社會發展-1" class="nav-link" data-scroll-target="#挑選變項檢視分佈-v41台灣社會發展-1">挑選變項檢視分佈-v41台灣社會發展</a></li>
   </ul></li>
   <li><a href="#檢驗駕照持有人數" id="toc-檢驗駕照持有人數" class="nav-link" data-scroll-target="#檢驗駕照持有人數">檢驗駕照持有人數</a></li>
   </ul></li>
@@ -134,16 +140,19 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <section id="加權weighting" class="level1">
 <h1>加權（Weighting）</h1>
 <p><strong>加權</strong>是將樣本資料根據特定變項給予新的權數，以調整每個樣本佔整體資料的比例。</p>
+<section id="套件與資料" class="level2">
+<h2 class="anchored" data-anchor-id="套件與資料">套件與資料</h2>
 <p>本文使用到的套件如下：</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(car)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(haven)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(expss)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(survey)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(weights)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(car) <span class="co">#重新編碼</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(XML) <span class="co">#讀取駕照資料（XML file）</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(haven) <span class="co">#讀取社會變遷調查資料</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr) <span class="co">#Data transformation</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(expss) <span class="co">#Data labeling</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(survey) <span class="co">#Raking</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(weights) <span class="co">#To table with weights</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr) <span class="co">#String manipulation</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <section id="樣本資料" class="level3">
 <h3 class="anchored" data-anchor-id="樣本資料">樣本資料</h3>
@@ -165,7 +174,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="st">                                             60:69="60-69歲"; else="70歲以上"'</span>)])</span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>tscs201 <span class="ot">&lt;-</span> <span class="fu">apply_labels</span>(<span class="at">data =</span> tscs201, <span class="at">Age =</span> <span class="st">"年齡"</span>)</span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>Sample <span class="ot">&lt;-</span> tscs201[, .(Sex, Age)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>Sample <span class="ot">&lt;-</span> tscs201[, .(Sex, Age, <span class="at">License =</span> v118, <span class="at">TW =</span> v41)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="母體資料" class="level3">
@@ -188,37 +197,43 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>                          年齡 <span class="ot">=</span> <span class="fu">as.numeric</span>(<span class="fu">str_extract</span>(<span class="at">string =</span> Group, <span class="at">pattern =</span> <span class="st">"(^[0-9]{1,3})"</span>)),</span>
 <span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>                          人口數 <span class="ot">=</span> <span class="fu">as.numeric</span>(Population))]</span>
 <span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>                     [年齡 <span class="sc">&gt;=</span> <span class="dv">18</span>, ]</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>                     [, <span class="at">Age :=</span> <span class="fu">Recode</span>(年齡, <span class="at">recodes =</span> <span class="st">'18:29="18-29歲"; 30:39="30-39歲";</span></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="st">                                                                  40:49="40-49歲"; 50:59="50-59歲";</span></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="st">                                                                  60:69="60-69歲"; else="70歲以上"'</span>)])</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>                     [, <span class="st">":="</span>(<span class="at">Age =</span> <span class="fu">Recode</span>(年齡, <span class="at">recodes =</span> <span class="st">'18:29="18-29歲"; 30:39="30-39歲";</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="st">                                                           40:49="40-49歲"; 50:59="50-59歲";</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="st">                                                           60:69="60-69歲"; else="70歲以上"'</span>))])</span>
 <span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>Population <span class="ot">&lt;-</span> popByAge[, .(人口數 <span class="ot">=</span> <span class="fu">sum</span>(人口數)), by <span class="ot">=</span> .(Sex, Age)]</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>sex <span class="ot">&lt;-</span> Population[, .(人口數比例 <span class="ot">=</span> 人口數 <span class="sc">/</span> <span class="fu">sum</span>(人口數), Sex)][, .(<span class="at">Freq =</span> <span class="fu">sum</span>(人口數比例)), by <span class="ot">=</span> .(Sex)] <span class="sc">|&gt;</span> <span class="fu">t</span>()</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>age <span class="ot">&lt;-</span> Population[, .(人口數比例 <span class="ot">=</span> 人口數 <span class="sc">/</span> <span class="fu">sum</span>(人口數), Age)][, .(<span class="at">Freq =</span> <span class="fu">sum</span>(人口數比例)), by <span class="ot">=</span> .(Age)] <span class="sc">|&gt;</span> <span class="fu">t</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>sex <span class="ot">&lt;-</span> (Population[, .(人口數比例 <span class="ot">=</span> 人口數 <span class="sc">/</span> <span class="fu">sum</span>(人口數), Sex)]</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>                  [, .(<span class="at">Freq =</span> <span class="fu">round</span>(<span class="fu">sum</span>(人口數比例), <span class="dv">2</span>)), <span class="at">by =</span> .(Sex)])</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>sex <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">transpose</span>(sex[, <span class="sc">-</span><span class="dv">1</span>]), <span class="fu">unlist</span>(sex[, <span class="dv">1</span>]))</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>age <span class="ot">&lt;-</span> (Population[, .(人口數比例 <span class="ot">=</span> 人口數 <span class="sc">/</span> <span class="fu">sum</span>(人口數), Age)]</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>                  [, .(<span class="at">Freq =</span> <span class="fu">round</span>(<span class="fu">sum</span>(人口數比例), <span class="dv">2</span>)), <span class="at">by =</span> .(Age)])</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>age <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">transpose</span>(age[, <span class="sc">-</span><span class="dv">1</span>]), <span class="fu">unlist</span>(age[, <span class="dv">1</span>]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="使用卡方檢定檢查分佈情形" class="level3">
 <h3 class="anchored" data-anchor-id="使用卡方檢定檢查分佈情形">使用卡方檢定檢查分佈情形</h3>
 <p>我們使用<code>chisq.test()</code>來檢查樣本資料分佈的比例是否與母體資料相符（Goodness-of-Fit），其中要檢測的變相為<strong>性別</strong>及<strong>年齡組</strong>，因此以<code>table()</code>取得兩個變項的次數分佈，並將p設定為母體的比例。</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(<span class="fu">table</span>(tscs201<span class="sc">$</span>Sex), <span class="at">p =</span> <span class="fu">as.numeric</span>(sex[<span class="dv">2</span>, ]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(<span class="fu">table</span>(Sample<span class="sc">$</span>Sex), <span class="at">p =</span> <span class="fu">as.numeric</span>(sex[<span class="dv">1</span>, ]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Chi-squared test for given probabilities
 
-data:  table(tscs201$Sex)
-X-squared = 9.6335, df = 1, p-value = 0.001911</code></pre>
+data:  table(Sample$Sex)
+X-squared = 9.1001, df = 1, p-value = 0.002556</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(<span class="fu">table</span>(tscs201<span class="sc">$</span>Age), <span class="at">p =</span> <span class="fu">round</span>(<span class="fu">as.numeric</span>(age[<span class="dv">2</span>, ]), <span class="dv">2</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(<span class="fu">table</span>(Sample<span class="sc">$</span>Age), <span class="at">p =</span> <span class="fu">as.numeric</span>(age[<span class="dv">1</span>, ]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Chi-squared test for given probabilities
 
-data:  table(tscs201$Age)
+data:  table(Sample$Age)
 X-squared = 47.186, df = 5, p-value = 5.207e-09</code></pre>
 </div>
 </div>
 <p>經過卡方檢定可以發現，無論是性別或年齡組，樣本與母體都有顯著差異（p-value&lt;0.05），因此需要對樣本資料進行加權，首先我們採用<strong>事後分層加權</strong>（Post-Stratification）。</p>
+</section>
 </section>
 <section id="事後分層加權post-stratification" class="level2">
 <h2 class="anchored" data-anchor-id="事後分層加權post-stratification">事後分層加權（Post-Stratification）</h2>
@@ -227,134 +242,365 @@ X-squared = 47.186, df = 5, p-value = 5.207e-09</code></pre>
 <p><span class="math display">\[W_i=\frac{P_i}{p_i}\]</span></p>
 <p>接下來要檢視母體各層的比例：</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>jointDisPop <span class="ot">&lt;-</span> <span class="fu">dcast</span>(Population, Sex <span class="sc">~</span> Age, <span class="at">value.var=</span><span class="st">"人口數"</span>)[, <span class="sc">-</span><span class="dv">1</span>] <span class="sc">|&gt;</span> <span class="fu">as.data.frame</span>()</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">row.names</span>(jointDisPop) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">'男'</span>, <span class="st">'女'</span>)</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>jointDisPop <span class="ot">&lt;-</span> (jointDisPop <span class="sc">/</span> <span class="fu">sum</span>(<span class="fu">sum</span>(jointDisPop[<span class="dv">1</span>, ]) <span class="sc">+</span> <span class="fu">sum</span>(jointDisPop[<span class="dv">2</span>, ]))) <span class="sc">|&gt;</span> <span class="fu">round</span>(<span class="dv">3</span>)</span>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>jointDisPop <span class="ot">&lt;-</span> <span class="fu">dcast</span>(Population, <span class="fu">factor</span>(Sex, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">'男'</span>, <span class="st">'女'</span>)) <span class="sc">~</span> Age,</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>                     <span class="at">value.var=</span><span class="st">"人口數"</span>)[, <span class="sc">-</span><span class="dv">1</span>]</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>jointDisPop <span class="ot">&lt;-</span> (jointDisPop <span class="sc">/</span> <span class="fu">sum</span>(jointDisPop))</span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>jointDisPop</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   18-29歲 30-39歲 40-49歲 50-59歲 60-69歲 70歲以上
-男   0.087   0.086   0.096   0.093   0.082    0.065
-女   0.094   0.088   0.093   0.089   0.075    0.052</code></pre>
+<pre><code>      18-29歲    30-39歲    40-49歲    50-59歲    60-69歲   70歲以上
+1: 0.09363268 0.08794697 0.09298987 0.08928223 0.07505539 0.05210569
+2: 0.08657803 0.08644110 0.09636962 0.09278977 0.08151928 0.06528937</code></pre>
 </div>
 </div>
 <p>以及樣本各層的比例：</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>jointDisSam <span class="ot">&lt;-</span> <span class="fu">table</span>(Sample<span class="sc">$</span>Sex, Sample<span class="sc">$</span>Age)</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>jointDisSam <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">prop.table</span>(jointDisSam), <span class="dv">3</span>) <span class="sc">|&gt;</span> <span class="fu">as.data.table</span>()</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>jointDisSam <span class="ot">&lt;-</span> <span class="fu">dcast</span>(jointDisSam, V1 <span class="sc">~</span> V2, <span class="at">value.var=</span><span class="st">"N"</span>)[, <span class="sc">-</span><span class="dv">1</span>] <span class="sc">|&gt;</span> <span class="fu">as.data.frame</span>()</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="fu">row.names</span>(jointDisSam) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">'男'</span>, <span class="st">'女'</span>)</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>jointDisSam</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>jointDisSam <span class="ot">&lt;-</span> <span class="fu">prop.table</span>(<span class="fu">table</span>(Sample<span class="sc">$</span>Sex, Sample<span class="sc">$</span>Age)) <span class="sc">|&gt;</span> <span class="fu">as.data.table</span>()</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>jointDisSam <span class="ot">&lt;-</span> <span class="fu">dcast</span>(jointDisSam, <span class="fu">factor</span>(V1, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">'男'</span>, <span class="st">'女'</span>)) <span class="sc">~</span> V2,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">value.var=</span><span class="st">"N"</span>)[, <span class="sc">-</span><span class="dv">1</span>]</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>jointDisSam</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   18-29歲 30-39歲 40-49歲 50-59歲 60-69歲 70歲以上
-男   0.059   0.083   0.098   0.120   0.098    0.087
-女   0.069   0.079   0.088   0.087   0.076    0.056</code></pre>
+<pre><code>      18-29歲    30-39歲    40-49歲    50-59歲    60-69歲   70歲以上
+1: 0.06900270 0.07924528 0.08787062 0.08733154 0.07601078 0.05552561
+2: 0.05876011 0.08301887 0.09757412 0.12021563 0.09811321 0.08733154</code></pre>
 </div>
 </div>
 <p>透過前述的計算方式，我們可以得出每一層的權數為：</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>psWeight <span class="ot">&lt;-</span> (jointDisPop <span class="sc">/</span> jointDisSam) <span class="sc">|&gt;</span> <span class="fu">round</span>(<span class="dv">3</span>)</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>psWeight</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>psWeight <span class="ot">&lt;-</span> (jointDisPop <span class="sc">/</span> jointDisSam) <span class="sc">|&gt;</span> <span class="fu">as.data.frame</span>()</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">row.names</span>(psWeight) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">'男'</span>, <span class="st">'女'</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>psWeight</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   18-29歲 30-39歲 40-49歲 50-59歲 60-69歲 70歲以上
-男   1.475   1.036   0.980   0.775   0.837    0.747
-女   1.362   1.114   1.057   1.023   0.987    0.929</code></pre>
+<pre><code>    18-29歲  30-39歲   40-49歲   50-59歲   60-69歲  70歲以上
+男 1.356942 1.109807 1.0582590 1.0223366 0.9874309 0.9384083
+女 1.473415 1.041222 0.9876555 0.7718611 0.8308696 0.7476036</code></pre>
 </div>
 </div>
 <p>接下來要將計算出來的權數依據性別及年齡分派給每一個樣本</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>psWeight <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">rownames_to_column</span>(psWeight, <span class="at">var =</span> <span class="st">"Sex"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>            <span class="fu">pivot_longer</span>(<span class="sc">!</span>Sex, <span class="at">names_to =</span> <span class="st">"Age"</span>, <span class="at">values_to =</span> <span class="st">"Weight"</span>)</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>SamplePS <span class="ot">&lt;-</span> Sample[, <span class="st">":="</span>(<span class="at">Sex =</span> <span class="fu">as.character</span>(Sex), <span class="at">Age =</span> <span class="fu">as.character</span>(Age))]</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>SamplePS <span class="ot">&lt;-</span> dplyr<span class="sc">::</span><span class="fu">left_join</span>(SamplePS, psWeight)</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>SamplePS</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>            <span class="fu">pivot_longer</span>(<span class="sc">!</span>Sex, <span class="at">names_to =</span> <span class="st">"Age"</span>, <span class="at">values_to =</span> <span class="st">"weights"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>            <span class="fu">data.frame</span>()</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>SamplePS <span class="ot">&lt;-</span> <span class="fu">merge</span>(Sample, psWeight, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">'Sex'</span>, <span class="st">'Age'</span>))</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>SamplePS[, Sex <span class="sc">:</span><span class="er">=</span> <span class="fu">factor</span>(Sex, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">'男'</span>, <span class="st">'女'</span>))][]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>      Sex      Age Weight
-   1:  女 70歲以上  0.929
-   2:  女  30-39歲  1.114
-   3:  女  50-59歲  1.023
-   4:  女  50-59歲  1.023
-   5:  男  50-59歲  0.775
-  ---                    
-1851:  男  18-29歲  1.475
-1852:  女  18-29歲  1.362
-1853:  女  18-29歲  1.362
-1854:  男  18-29歲  1.475
-1855:  女  18-29歲  1.362</code></pre>
+<pre><code>      Sex      Age License TW   weights
+   1:  女  18-29歲       2  1 1.4734150
+   2:  女  18-29歲       2  2 1.4734150
+   3:  女  18-29歲       1  2 1.4734150
+   4:  女  18-29歲       1  2 1.4734150
+   5:  女  18-29歲       1  3 1.4734150
+  ---                                  
+1851:  男 70歲以上       1  3 0.9384083
+1852:  男 70歲以上       1  4 0.9384083
+1853:  男 70歲以上       2  3 0.9384083
+1854:  男 70歲以上       1 97 0.9384083
+1855:  男 70歲以上       1  2 0.9384083</code></pre>
 </div>
 </div>
 <section id="使用卡方檢定檢查分佈情形-1" class="level3">
 <h3 class="anchored" data-anchor-id="使用卡方檢定檢查分佈情形-1">使用卡方檢定檢查分佈情形</h3>
 <p>現在可以再次使用卡方檢定來檢查加權後的次數分佈有沒有符合母體分佈情形，使用<code>wpct()</code>來查看加權後的次數分佈。</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(<span class="fu">wpct</span>(SamplePS<span class="sc">$</span>Sex, SamplePS<span class="sc">$</span>Weight), <span class="at">p =</span> <span class="fu">as.numeric</span>(sex[<span class="dv">2</span>, ]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(<span class="fu">wpct</span>(SamplePS<span class="sc">$</span>Sex, SamplePS<span class="sc">$</span>weights) <span class="sc">*</span> <span class="fu">nrow</span>(SamplePS), <span class="at">p =</span> <span class="fu">as.numeric</span>(sex[<span class="dv">1</span>, ]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Chi-squared test for given probabilities
 
-data:  wpct(SamplePS$Sex, SamplePS$Weight)
-X-squared = 0.022286, df = 1, p-value = 0.8813</code></pre>
+data:  wpct(SamplePS$Sex, SamplePS$weights) * nrow(SamplePS)
+X-squared = 0.0076147, df = 1, p-value = 0.9305</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(<span class="fu">wpct</span>(SamplePS<span class="sc">$</span>Age, SamplePS<span class="sc">$</span>Weight), <span class="at">p =</span> <span class="fu">round</span>(<span class="fu">as.numeric</span>(age[<span class="dv">2</span>, ]), <span class="dv">2</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(<span class="fu">wpct</span>(SamplePS<span class="sc">$</span>Age, SamplePS<span class="sc">$</span>weights) <span class="sc">*</span> <span class="fu">nrow</span>(SamplePS), <span class="at">p =</span> <span class="fu">as.numeric</span>(age[<span class="dv">1</span>, ]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Chi-squared test for given probabilities
 
-data:  wpct(SamplePS$Age, SamplePS$Weight)
-X-squared = 0.00044177, df = 5, p-value = 1</code></pre>
+data:  wpct(SamplePS$Age, SamplePS$weights) * nrow(SamplePS)
+X-squared = 0.49974, df = 5, p-value = 0.9921</code></pre>
 </div>
 </div>
 <p>透過卡方檢定的結果可以發現，無論是性別或是年齡組，p-value都大於0.05，樣本與母體沒有顯著差異，事後分層加權就正式完成了。</p>
+</section>
+<section id="挑選變項檢視分佈-v41台灣社會發展" class="level3">
+<h3 class="anchored" data-anchor-id="挑選變項檢視分佈-v41台灣社會發展">挑選變項檢視分佈-v41台灣社會發展</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(SamplePS<span class="sc">$</span>TW)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+  1   2   3   4  97  98 
+118 785 649 197 104   2 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>(<span class="fu">wpct</span>(SamplePS<span class="sc">$</span>TW, SamplePS<span class="sc">$</span>weights) <span class="sc">*</span> <span class="fu">nrow</span>(SamplePS)) <span class="sc">|&gt;</span> <span class="fu">round</span>(<span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    1     2     3     4    97    98 
+118.4 808.1 641.4 193.5  91.2   2.5 </code></pre>
+</div>
+</div>
 </section>
 </section>
 <section id="多變項反覆加權raking" class="level2">
 <h2 class="anchored" data-anchor-id="多變項反覆加權raking">多變項反覆加權（Raking）</h2>
 <p>多變項反覆加權是利用不同變項的比例逐一進行加權，直到符合母體分佈的加權方法，單一變項的權數計算方式如下。</p>
 <p><span class="math display">\[W_i=\frac{N_i}{N}*\frac{n}{n_i}\]</span></p>
-<p>多變項反覆加權需要使用<code>survey</code>套件，首先用<code>svydesign()</code>建立一的尚未加權的資料集，並計算出母體的期望值。</p>
+<section id="使用survey套件進行加權" class="level3">
+<h3 class="anchored" data-anchor-id="使用survey套件進行加權">使用survey套件進行加權</h3>
+<p>在R中，可以使用<code>survey</code>套件進行反覆加權，先用<code>svydesign()</code>建立一個尚未加權的調查資料集，再使用<code>rake()</code>計算權數，<code>sample.margins</code>代表樣本中要用來加權的變項，<code>population.margins</code>代表母體的期望值。</p>
+<p>計算完成後可以使用<code>weights()</code>取出權數並分配給對應的樣本。</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>SampleRK <span class="ot">&lt;-</span> tscs201[, .(Sex, Age)]</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>Unweighted <span class="ot">&lt;-</span> <span class="fu">svydesign</span>(<span class="at">ids =</span> <span class="sc">~</span> <span class="dv">0</span>, <span class="at">data =</span> SampleRK)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning in svydesign.default(ids = ~0, data = SampleRK): No weights or
-probabilities supplied, assuming equal probability</code></pre>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>SampleRK <span class="ot">&lt;-</span> tscs201[, .(Sex, Age, <span class="at">License =</span> v118, <span class="at">TW =</span> v41)]</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>sex2 <span class="ot">&lt;-</span> (Population[, .(人口數比例 <span class="ot">=</span> 人口數 <span class="sc">/</span> <span class="fu">sum</span>(人口數), Sex)]</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>                   [, .(<span class="at">Freq =</span> <span class="fu">nrow</span>(SampleRK) <span class="sc">*</span> <span class="fu">sum</span>(人口數比例)), <span class="at">by =</span> .(Sex)])</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>age2 <span class="ot">&lt;-</span> (Population[, .(人口數比例 <span class="ot">=</span> 人口數 <span class="sc">/</span> <span class="fu">sum</span>(人口數), Age)]</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>                   [, .(<span class="at">Freq =</span> <span class="fu">nrow</span>(SampleRK) <span class="sc">*</span> <span class="fu">sum</span>(人口數比例)), <span class="at">by =</span> .(Age)])</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>unweighted <span class="ot">&lt;-</span> <span class="fu">svydesign</span>(<span class="at">ids =</span> <span class="sc">~</span> <span class="dv">0</span>, <span class="at">data =</span> SampleRK)</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>raking <span class="ot">&lt;-</span> <span class="fu">rake</span>(<span class="at">design =</span> unweighted, <span class="at">sample.margins =</span> <span class="fu">list</span>(<span class="sc">~</span> Sex, <span class="sc">~</span> Age), </span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>               <span class="at">population.margins =</span> <span class="fu">list</span>(sex2, age2))</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>SampleRK<span class="sc">$</span>weights <span class="ot">&lt;-</span> <span class="fu">weights</span>(raking)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>sex2 <span class="ot">&lt;-</span> Population[, .(人口數比例 <span class="ot">=</span> 人口數 <span class="sc">/</span> <span class="fu">sum</span>(人口數), Sex)][, .(<span class="at">Freq =</span> <span class="fu">nrow</span>(SampleRK) <span class="sc">*</span> <span class="fu">sum</span>(人口數比例)), by <span class="ot">=</span> .(Sex)]</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>age2 <span class="ot">&lt;-</span> Population[, .(人口數比例 <span class="ot">=</span> 人口數 <span class="sc">/</span> <span class="fu">sum</span>(人口數), Age)][, .(<span class="at">Freq =</span> <span class="fu">nrow</span>(SampleRK) <span class="sc">*</span> <span class="fu">sum</span>(人口數比例)), by <span class="ot">=</span> .(Age)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>接著使用母體期望值進行加權，<code>sample.margins</code>為樣本資料的欄位，<code>population.margins</code>為母體資料的欄位。</p>
+<p>此時可以用卡方檢定來確認加權結果：</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>raking <span class="ot">&lt;-</span> <span class="fu">rake</span>(<span class="at">design =</span> Unweighted, <span class="at">sample.margins =</span> <span class="fu">list</span>(<span class="sc">~</span> Sex, <span class="sc">~</span> Age), </span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">population.margins =</span> <span class="fu">list</span>(sex2, age2))</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>SampleRK<span class="sc">$</span>Weight <span class="ot">&lt;-</span> <span class="fu">weights</span>(raking)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<section id="使用卡方檢定檢查分佈情形-2" class="level3">
-<h3 class="anchored" data-anchor-id="使用卡方檢定檢查分佈情形-2">使用卡方檢定檢查分佈情形</h3>
-<p>現在可以再次使用卡方檢定來檢查加權後的次數分佈有沒有符合母體分佈情形，使用<code>wpct()</code>來查看加權後的次數分佈。</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(<span class="fu">wpct</span>(SampleRK<span class="sc">$</span>Sex, SampleRK<span class="sc">$</span>weights), <span class="at">p =</span> <span class="fu">as.numeric</span>(sex[<span class="dv">2</span>, ]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(<span class="fu">wpct</span>(SampleRK<span class="sc">$</span>Sex, SampleRK<span class="sc">$</span>weights) <span class="sc">*</span> <span class="fu">nrow</span>(SampleRK), <span class="at">p =</span> <span class="fu">as.numeric</span>(sex[<span class="dv">1</span>, ]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Chi-squared test for given probabilities
 
-data:  wpct(SampleRK$Sex, SampleRK$weights)
-X-squared = 0.0051932, df = 1, p-value = 0.9426</code></pre>
+data:  wpct(SampleRK$Sex, SampleRK$weights) * nrow(SampleRK)
+X-squared = 0.0076244, df = 1, p-value = 0.9304</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(<span class="fu">wpct</span>(SampleRK<span class="sc">$</span>Age, SampleRK<span class="sc">$</span>weights), <span class="at">p =</span> <span class="fu">round</span>(<span class="fu">as.numeric</span>(age[<span class="dv">2</span>, ]), <span class="dv">2</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(<span class="fu">wpct</span>(SampleRK<span class="sc">$</span>Age, SampleRK<span class="sc">$</span>weights) <span class="sc">*</span> <span class="fu">nrow</span>(SampleRK), <span class="at">p =</span> <span class="fu">as.numeric</span>(age[<span class="dv">1</span>, ]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Chi-squared test for given probabilities
 
-data:  wpct(SampleRK$Age, SampleRK$weights)
-X-squared = 0.025437, df = 5, p-value = 1</code></pre>
+data:  wpct(SampleRK$Age, SampleRK$weights) * nrow(SampleRK)
+X-squared = 0.49974, df = 5, p-value = 0.9921</code></pre>
 </div>
 </div>
-<p>透過卡方檢定的結果可以發現，無論是性別或是年齡組，p-value都大於0.05，樣本與母體沒有顯著差異，多變項反覆加權就正式完成了。</p>
+</section>
+<section id="手動反覆加權" class="level3">
+<h3 class="anchored" data-anchor-id="手動反覆加權">手動反覆加權</h3>
+<p>手動反覆加權需要利用前述的公式逐一計算各個變項的權數，首先計算性別的權數：</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>S <span class="ot">&lt;-</span> <span class="fu">prop.table</span>(<span class="fu">table</span>(SampleRK<span class="sc">$</span>Sex)) <span class="sc">|&gt;</span> <span class="fu">data.frame</span>() <span class="sc">|&gt;</span> <span class="fu">t</span>()</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>sexW <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">Sex =</span> <span class="fu">c</span>(<span class="st">'男'</span>, <span class="st">'女'</span>),</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>                   <span class="at">WS =</span> <span class="fu">as.numeric</span>(sex[<span class="dv">1</span>, ]) <span class="sc">/</span> <span class="fu">as.numeric</span>(S[<span class="dv">2</span>, ]))</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>SampleRK <span class="ot">&lt;-</span> <span class="fu">merge</span>(SampleRK, sexW, <span class="at">by =</span> <span class="st">'Sex'</span>)</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>SampleRK[, Sex <span class="sc">:</span><span class="er">=</span> <span class="fu">factor</span>(Sex, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">'男'</span>, <span class="st">'女'</span>))]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(<span class="fu">wpct</span>(SampleRK<span class="sc">$</span>Sex, SampleRK<span class="sc">$</span>WS) <span class="sc">*</span> <span class="fu">nrow</span>(SampleRK), <span class="at">p =</span> <span class="fu">as.numeric</span>(sex[<span class="dv">1</span>, ]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Chi-squared test for given probabilities
+
+data:  wpct(SampleRK$Sex, SampleRK$WS) * nrow(SampleRK)
+X-squared = 3.9572e-12, df = 1, p-value = 1</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(<span class="fu">wpct</span>(SampleRK<span class="sc">$</span>Age, SampleRK<span class="sc">$</span>WS) <span class="sc">*</span> <span class="fu">nrow</span>(SampleRK), <span class="at">p =</span> <span class="fu">as.numeric</span>(age[<span class="dv">1</span>, ]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Chi-squared test for given probabilities
+
+data:  wpct(SampleRK$Age, SampleRK$WS) * nrow(SampleRK)
+X-squared = 43.771, df = 5, p-value = 2.578e-08</code></pre>
+</div>
+</div>
+<p>在加權完性別以後，可以發現性別與母體分佈已經沒有顯著差異，但年齡仍有差異，因此進行年齡的加權：</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>SexAgeCount <span class="ot">&lt;-</span> SampleRK[, .(.N), by <span class="ot">=</span> .(Age, Sex)]</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>AgeProb <span class="ot">&lt;-</span> <span class="fu">merge</span>(SexAgeCount, sexW)</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>AgeProb <span class="ot">&lt;-</span> AgeProb[, N <span class="sc">:</span><span class="er">=</span> N <span class="sc">*</span> WS][, .(<span class="at">N =</span> <span class="fu">sum</span>(N)), by <span class="ot">=</span> .(Age)][, ProbA <span class="sc">:</span><span class="er">=</span> N <span class="sc">/</span> <span class="fu">sum</span>(N)]</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>A <span class="ot">&lt;-</span> Population[, .(人口數比例 <span class="ot">=</span> 人口數 <span class="sc">/</span> <span class="fu">sum</span>(人口數), Age)][, .(<span class="at">FreqA =</span> <span class="fu">sum</span>(人口數比例)), by <span class="ot">=</span> .(Age)]</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>ageW <span class="ot">&lt;-</span> <span class="fu">merge</span>(AgeProb, A)</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>ageW <span class="ot">&lt;-</span> ageW[, .(Age, <span class="at">WA =</span> FreqA <span class="sc">/</span> ProbA)]</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>SampleRK <span class="ot">&lt;-</span> <span class="fu">merge</span>(SampleRK, ageW)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>在加權玩年齡以後，可以看到年齡和母體分佈沒有差異，但性別有差異：</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(<span class="fu">wpct</span>(SampleRK<span class="sc">$</span>Sex, SampleRK<span class="sc">$</span>WA) <span class="sc">*</span> <span class="fu">nrow</span>(SampleRK), <span class="at">p =</span> <span class="fu">as.numeric</span>(sex[<span class="dv">1</span>, ]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Chi-squared test for given probabilities
+
+data:  wpct(SampleRK$Sex, SampleRK$WA) * nrow(SampleRK)
+X-squared = 5.6179, df = 1, p-value = 0.01778</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(<span class="fu">wpct</span>(SampleRK<span class="sc">$</span>Age, SampleRK<span class="sc">$</span>WA) <span class="sc">*</span> <span class="fu">nrow</span>(SampleRK), <span class="at">p =</span> <span class="fu">as.numeric</span>(age[<span class="dv">1</span>, ]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Chi-squared test for given probabilities
+
+data:  wpct(SampleRK$Age, SampleRK$WA) * nrow(SampleRK)
+X-squared = 0.41905, df = 5, p-value = 0.9948</code></pre>
+</div>
+</div>
+<p>接下來將性別與年齡的權數相乘，得到總權數：</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>SampleRK[, weights2 <span class="sc">:</span><span class="er">=</span> WS <span class="sc">*</span> WA]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>使用總權數進行卡方檢定：</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(<span class="fu">wpct</span>(SampleRK<span class="sc">$</span>Sex, SampleRK<span class="sc">$</span>weights2) <span class="sc">*</span> <span class="fu">nrow</span>(SampleRK), <span class="at">p =</span> <span class="fu">as.numeric</span>(sex[<span class="dv">1</span>, ]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Chi-squared test for given probabilities
+
+data:  wpct(SampleRK$Sex, SampleRK$weights2) * nrow(SampleRK)
+X-squared = 0.42351, df = 1, p-value = 0.5152</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(<span class="fu">wpct</span>(SampleRK<span class="sc">$</span>Age, SampleRK<span class="sc">$</span>weights2) <span class="sc">*</span> <span class="fu">nrow</span>(SampleRK), <span class="at">p =</span> <span class="fu">as.numeric</span>(age[<span class="dv">1</span>, ]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Chi-squared test for given probabilities
+
+data:  wpct(SampleRK$Age, SampleRK$weights2) * nrow(SampleRK)
+X-squared = 0.49974, df = 5, p-value = 0.9921</code></pre>
+</div>
+</div>
+<p>根據卡方檢定的結果，可以看到在對兩個變項分別進行加權以後，樣本與母體已經沒有顯著差異。</p>
+</section>
+<section id="挑選變項檢視分佈-v41台灣社會發展-1" class="level3">
+<h3 class="anchored" data-anchor-id="挑選變項檢視分佈-v41台灣社會發展-1">挑選變項檢視分佈-v41台灣社會發展</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(SampleRK<span class="sc">$</span>TW)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+  1   2   3   4  97  98 
+118 785 649 197 104   2 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>(<span class="fu">wpct</span>(SampleRK<span class="sc">$</span>TW, SampleRK<span class="sc">$</span>weights2) <span class="sc">*</span> <span class="fu">nrow</span>(SampleRK)) <span class="sc">|&gt;</span> <span class="fu">round</span>(<span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    1     2     3     4    97    98 
+118.4 806.6 641.2 194.5  92.1   2.3 </code></pre>
+</div>
+</div>
 </section>
 </section>
 <section id="檢驗駕照持有人數" class="level2">
 <h2 class="anchored" data-anchor-id="檢驗駕照持有人數">檢驗駕照持有人數</h2>
+<div class="cell">
+
+</div>
+<p>此處使用政府資料開放平臺上行政院交通部發布之「<strong>領有駕駛執照人數</strong>」資料集來作為駕照母體資料，並按性別及年齡層計算人數</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>license <span class="ot">&lt;-</span> <span class="fu">xmlToDataFrame</span>(<span class="fu">paste0</span>(path3, <span class="st">'領有駕駛執照人數2.XML'</span>)) <span class="sc">|&gt;</span> <span class="fu">setDT</span>()</span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>license <span class="ot">&lt;-</span> (license[Category1Title <span class="sc">==</span> <span class="st">'小型車普通駕駛人'</span> <span class="sc">&amp;</span> Category2Title <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">'男'</span>, <span class="st">'女'</span>) <span class="sc">&amp;</span> Category3Title <span class="sc">!=</span> <span class="st">'計'</span>, ]</span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>                   [, <span class="st">":="</span>(<span class="at">Sex =</span> <span class="fu">factor</span>(Category2Title, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">'男'</span>, <span class="st">'女'</span>)),</span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>                           <span class="at">Age =</span> <span class="fu">Recode</span>(Category3Title, <span class="st">"c('未滿20歲', '20-未滿25歲', '25-未滿30歲')='18-29歲';</span></span>
+<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a><span class="st">                                                         c('30-未滿35歲', '35-未滿40歲')='30-39歲';</span></span>
+<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a><span class="st">                                                         c('40-未滿45歲', '45-未滿50歲')='40-49歲';</span></span>
+<span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a><span class="st">                                                         c('50-未滿55歲', '55-未滿60歲')='50-59歲';</span></span>
+<span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a><span class="st">                                                         '60歲以上'='60歲以上'"</span>))])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>由於資料集的年齡將60歲以上分為一組，因此需要重新編碼：</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>SampleRK<span class="sc">$</span>Age2 <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(SampleRK<span class="sc">$</span>Age <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">'60-69歲'</span>, <span class="st">'70歲以上'</span>), <span class="st">'60歲以上'</span>, SampleRK<span class="sc">$</span>Age)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>接著計算出母體及樣本的人數：</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>license <span class="ot">&lt;-</span> license[Period <span class="sc">==</span> <span class="st">'11000'</span>, .(人數 <span class="ot">=</span> <span class="fu">sum</span>(<span class="fu">as.numeric</span>(Val))), keyby <span class="ot">=</span> .(Sex, Age)][, 比例 <span class="sc">:</span><span class="er">=</span> 人數 <span class="sc">/</span> <span class="fu">sum</span>(人數)]</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>license[]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    Sex      Age    人數       比例
+ 1:  男  18-29歲 1190837 0.09059562
+ 2:  男  30-39歲 1391429 0.10585612
+ 3:  男  40-49歲 1414489 0.10761046
+ 4:  男  50-59歲 1289305 0.09808680
+ 5:  男 60歲以上 1718989 0.13077599
+ 6:  女  18-29歲  876438 0.06667701
+ 7:  女  30-39歲 1294934 0.09851504
+ 8:  女  40-49歲 1544860 0.11752873
+ 9:  女  50-59歲 1337533 0.10175586
+10:  女 60歲以上 1085717 0.08259838</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>SampleL <span class="ot">&lt;-</span> SampleRK[License <span class="sc">==</span> <span class="dv">1</span>, .(人數 <span class="ot">=</span> .N, 加權人數 <span class="ot">=</span> <span class="fu">sum</span>(weights)), keyby <span class="ot">=</span> .(Sex, Age2)]</span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>SampleL</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    Sex     Age2 人數  加權人數
+ 1:  男  18-29歲   88 130.60355
+ 2:  男  30-39歲  138 156.97327
+ 3:  男  40-49歲  145 156.96911
+ 4:  男  50-59歲  140 130.99989
+ 5:  男 60歲以上  190 176.47210
+ 6:  女  18-29歲   56  74.14711
+ 7:  女  30-39歲  108 109.59841
+ 8:  女  40-49歲  141 136.17557
+ 9:  女  50-59歲  156 130.22710
+10:  女 60歲以上  128 107.45957</code></pre>
+</div>
+</div>
+<p>使用卡方檢定比較加權前後的分佈情形：</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(SampleL<span class="sc">$</span>人數, <span class="at">p =</span> license<span class="sc">$</span>比例)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Chi-squared test for given probabilities
+
+data:  SampleL$人數
+X-squared = 34.604, df = 9, p-value = 6.997e-05</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(SampleL<span class="sc">$</span>加權人數, <span class="at">p =</span> license<span class="sc">$</span>比例)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Chi-squared test for given probabilities
+
+data:  SampleL$加權人數
+X-squared = 12.696, df = 9, p-value = 0.1769</code></pre>
+</div>
+</div>
+<p>加權後的p-value顯示樣本與母體的差異已經改善。</p>
+<p>另外還可以比較全體樣本有無駕照的比例：</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>l.Sample <span class="ot">&lt;-</span> SampleRK[License <span class="sc">!=</span> <span class="dv">97</span>, ]</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>l.Unweighted <span class="ot">&lt;-</span> <span class="fu">table</span>(l.Sample<span class="sc">$</span>License)</span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>l.Unweighted</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+   1    2 
+1290  564 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>l.Weighted <span class="ot">&lt;-</span> <span class="fu">wpct</span>(l.Sample<span class="sc">$</span>License, l.Sample<span class="sc">$</span>weights2) <span class="sc">*</span> <span class="fu">nrow</span>(l.Sample)</span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>l.Weighted</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        1         2 
+1312.2874  541.7126 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>l.Yes <span class="ot">&lt;-</span> <span class="fu">sum</span>(license<span class="sc">$</span>人數) <span class="sc">/</span> <span class="fu">sum</span>(Population<span class="sc">$</span>人口數)</span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>l.No <span class="ot">&lt;-</span> (<span class="fu">sum</span>(Population<span class="sc">$</span>人口數) <span class="sc">-</span> <span class="fu">sum</span>(license<span class="sc">$</span>人數)) <span class="sc">/</span> <span class="fu">sum</span>(Population<span class="sc">$</span>人口數)</span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a>l.exp <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(有駕照 <span class="ot">=</span> l.Yes <span class="sc">*</span> <span class="fu">nrow</span>(l.Sample), 沒駕照 <span class="ot">=</span> l.No <span class="sc">*</span> <span class="fu">nrow</span>(l.Sample))</span>
+<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a>l.exp</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    有駕照   沒駕照
+1 1221.842 632.1583</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(l.Unweighted, <span class="at">p =</span> <span class="fu">c</span>(l.Yes, l.No))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Chi-squared test for given probabilities
+
+data:  l.Unweighted
+X-squared = 11.151, df = 1, p-value = 0.0008399</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chisq.test</span>(l.Weighted, <span class="at">p =</span> <span class="fu">c</span>(l.Yes, l.No))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Chi-squared test for given probabilities
+
+data:  l.Weighted
+X-squared = 19.636, df = 1, p-value = 9.37e-06</code></pre>
+</div>
+</div>
+<p>檢定的結果顯示無論加權與否，駕照持有率跟母體都有顯著差異，加權後的差異可能更大，因此可以對駕照進行加權：</p>
+<div class="cell">
+
+</div>
 </section>
 </section>
 

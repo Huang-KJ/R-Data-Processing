@@ -5,24 +5,29 @@ format:
     toc-title: Contents
     toc-location: right
     page-layout: full
-    code-overflow: wrap
+    #code-overflow: wrap
 editor: visual
+editor_options: 
+  chunk_output_type: inline
 ---
 
 # 加權（Weighting）
 
 **加權**是將樣本資料根據特定變項給予新的權數，以調整每個樣本佔整體資料的比例。
 
+## 套件與資料
+
 本文使用到的套件如下：
 
 ```{r, message=FALSE}
-library(car)
-library(haven)
-library(tidyr)
-library(expss)
-library(survey)
-library(weights)
-library(stringr)
+library(car) #重新編碼
+library(XML) #讀取駕照資料（XML file）
+library(haven) #讀取社會變遷調查資料
+library(tidyr) #Data transformation
+library(expss) #Data labeling
+library(survey) #Raking
+library(weights) #To table with weights
+library(stringr) #String manipulation
 library(data.table)
 ```
 
@@ -49,7 +54,7 @@ tscs201 <- (copy(tscs201)
                                              60:69="60-69歲"; else="70歲以上"')])
 tscs201 <- apply_labels(data = tscs201, Age = "年齡")
 
-Sample <- tscs201[, .(Sex, Age)]
+Sample <- tscs201[, .(Sex, Age, License = v118, TW = v41)]
 ```
 
 ### 母體資料
@@ -74,13 +79,18 @@ popByAge <- (popByAge[, .(Area = str_sub(區域別, 1, 3),
                           年齡 = as.numeric(str_extract(string = Group, pattern = "(^[0-9]{1,3})")),
                           人口數 = as.numeric(Population))]
                      [年齡 >= 18, ]
-                     [, Age := Recode(年齡, recodes = '18:29="18-29歲"; 30:39="30-39歲";
-                                                                  40:49="40-49歲"; 50:59="50-59歲";
-                                                                  60:69="60-69歲"; else="70歲以上"')])
+                     [, ":="(Age = Recode(年齡, recodes = '18:29="18-29歲"; 30:39="30-39歲";
+                                                           40:49="40-49歲"; 50:59="50-59歲";
+                                                           60:69="60-69歲"; else="70歲以上"'))])
 
 Population <- popByAge[, .(人口數 = sum(人口數)), by = .(Sex, Age)]
-sex <- Population[, .(人口數比例 = 人口數 / sum(人口數), Sex)][, .(Freq = sum(人口數比例)), by = .(Sex)] |> t()
-age <- Population[, .(人口數比例 = 人口數 / sum(人口數), Age)][, .(Freq = sum(人口數比例)), by = .(Age)] |> t()
+sex <- (Population[, .(人口數比例 = 人口數 / sum(人口數), Sex)]
+                  [, .(Freq = round(sum(人口數比例), 2)), by = .(Sex)])
+sex <- setNames(transpose(sex[, -1]), unlist(sex[, 1]))
+
+age <- (Population[, .(人口數比例 = 人口數 / sum(人口數), Age)]
+                  [, .(Freq = round(sum(人口數比例), 2)), by = .(Age)])
+age <- setNames(transpose(age[, -1]), unlist(age[, 1]))
 ```
 
 ### 使用卡方檢定檢查分佈情形
@@ -88,8 +98,8 @@ age <- Population[, .(人口數比例 = 人口數 / sum(人口數), Age)][, .(Fr
 我們使用`chisq.test()`來檢查樣本資料分佈的比例是否與母體資料相符（Goodness-of-Fit），其中要檢測的變相為**性別**及**年齡組**，因此以`table()`取得兩個變項的次數分佈，並將p設定為母體的比例。
 
 ```{r}
-chisq.test(table(tscs201$Sex), p = as.numeric(sex[2, ]))
-chisq.test(table(tscs201$Age), p = round(as.numeric(age[2, ]), 2))
+chisq.test(table(Sample$Sex), p = as.numeric(sex[1, ]))
+chisq.test(table(Sample$Age), p = as.numeric(age[1, ]))
 ```
 
 經過卡方檢定可以發現，無論是性別或年齡組，樣本與母體都有顯著差異（p-value\<0.05），因此需要對樣本資料進行加權，首先我們採用**事後分層加權**（Post-Stratification）。
@@ -105,26 +115,26 @@ $$W_i=\frac{P_i}{p_i}$$
 接下來要檢視母體各層的比例：
 
 ```{r}
-jointDisPop <- dcast(Population, Sex ~ Age, value.var="人口數")[, -1] |> as.data.frame()
-row.names(jointDisPop) <- c('男', '女')
-jointDisPop <- (jointDisPop / sum(sum(jointDisPop[1, ]) + sum(jointDisPop[2, ]))) |> round(3)
+jointDisPop <- dcast(Population, factor(Sex, levels = c('男', '女')) ~ Age,
+                     value.var="人口數")[, -1]
+jointDisPop <- (jointDisPop / sum(jointDisPop))
 jointDisPop
 ```
 
 以及樣本各層的比例：
 
 ```{r}
-jointDisSam <- table(Sample$Sex, Sample$Age)
-jointDisSam <- round(prop.table(jointDisSam), 3) |> as.data.table()
-jointDisSam <- dcast(jointDisSam, V1 ~ V2, value.var="N")[, -1] |> as.data.frame()
-row.names(jointDisSam) <- c('男', '女')
+jointDisSam <- prop.table(table(Sample$Sex, Sample$Age)) |> as.data.table()
+jointDisSam <- dcast(jointDisSam, factor(V1, levels = c('男', '女')) ~ V2,
+                     value.var="N")[, -1]
 jointDisSam
 ```
 
 透過前述的計算方式，我們可以得出每一層的權數為：
 
 ```{r}
-psWeight <- (jointDisPop / jointDisSam) |> round(3)
+psWeight <- (jointDisPop / jointDisSam) |> as.data.frame()
+row.names(psWeight) <- c('男', '女')
 psWeight
 ```
 
@@ -132,12 +142,11 @@ psWeight
 
 ```{r, message=FALSE}
 psWeight <- tibble::rownames_to_column(psWeight, var = "Sex") |> 
-            pivot_longer(!Sex, names_to = "Age", values_to = "Weight")
+            pivot_longer(!Sex, names_to = "Age", values_to = "weights") |>
+            data.frame()
 
-SamplePS <- Sample[, ":="(Sex = as.character(Sex), Age = as.character(Age))]
-
-SamplePS <- dplyr::left_join(SamplePS, psWeight)
-SamplePS
+SamplePS <- merge(Sample, psWeight, by = c('Sex', 'Age'))
+SamplePS[, Sex := factor(Sex, levels = c('男', '女'))][]
 ```
 
 ### 使用卡方檢定檢查分佈情形
@@ -145,11 +154,18 @@ SamplePS
 現在可以再次使用卡方檢定來檢查加權後的次數分佈有沒有符合母體分佈情形，使用`wpct()`來查看加權後的次數分佈。
 
 ```{r, warning=FALSE}
-chisq.test(wpct(SamplePS$Sex, SamplePS$Weight), p = as.numeric(sex[2, ]))
-chisq.test(wpct(SamplePS$Age, SamplePS$Weight), p = round(as.numeric(age[2, ]), 2))
+chisq.test(wpct(SamplePS$Sex, SamplePS$weights) * nrow(SamplePS), p = as.numeric(sex[1, ]))
+chisq.test(wpct(SamplePS$Age, SamplePS$weights) * nrow(SamplePS), p = as.numeric(age[1, ]))
 ```
 
 透過卡方檢定的結果可以發現，無論是性別或是年齡組，p-value都大於0.05，樣本與母體沒有顯著差異，事後分層加權就正式完成了。
+
+### 挑選變項檢視分佈-v41台灣社會發展
+
+```{r}
+table(SamplePS$TW)
+(wpct(SamplePS$TW, SamplePS$weights) * nrow(SamplePS)) |> round(1)
+```
 
 ## 多變項反覆加權（Raking）
 
@@ -157,33 +173,160 @@ chisq.test(wpct(SamplePS$Age, SamplePS$Weight), p = round(as.numeric(age[2, ]), 
 
 $$W_i=\frac{N_i}{N}*\frac{n}{n_i}$$
 
-多變項反覆加權需要使用`survey`套件，首先用`svydesign()`建立一的尚未加權的資料集，並計算出母體的期望值。
+### 使用survey套件進行加權
 
-```{r}
-SampleRK <- tscs201[, .(Sex, Age)]
-Unweighted <- svydesign(ids = ~ 0, data = SampleRK)
+在R中，可以使用`survey`套件進行反覆加權，先用`svydesign()`建立一個尚未加權的調查資料集，再使用`rake()`計算權數，`sample.margins`代表樣本中要用來加權的變項，`population.margins`代表母體的期望值。
 
-sex2 <- Population[, .(人口數比例 = 人口數 / sum(人口數), Sex)][, .(Freq = nrow(SampleRK) * sum(人口數比例)), by = .(Sex)]
-age2 <- Population[, .(人口數比例 = 人口數 / sum(人口數), Age)][, .(Freq = nrow(SampleRK) * sum(人口數比例)), by = .(Age)]
-```
-
-接著使用母體期望值進行加權，`sample.margins`為樣本資料的欄位，`population.margins`為母體資料的欄位。
-
-```{r}
-raking <- rake(design = Unweighted, sample.margins = list(~ Sex, ~ Age), 
-               population.margins = list(sex2, age2))
-SampleRK$Weight <- weights(raking)
-```
-
-### 使用卡方檢定檢查分佈情形
-
-現在可以再次使用卡方檢定來檢查加權後的次數分佈有沒有符合母體分佈情形，使用`wpct()`來查看加權後的次數分佈。
+計算完成後可以使用`weights()`取出權數並分配給對應的樣本。
 
 ```{r, warning=FALSE}
-chisq.test(wpct(SampleRK$Sex, SampleRK$weights), p = as.numeric(sex[2, ]))
-chisq.test(wpct(SampleRK$Age, SampleRK$weights), p = round(as.numeric(age[2, ]), 2))
+SampleRK <- tscs201[, .(Sex, Age, License = v118, TW = v41)]
+
+sex2 <- (Population[, .(人口數比例 = 人口數 / sum(人口數), Sex)]
+                   [, .(Freq = nrow(SampleRK) * sum(人口數比例)), by = .(Sex)])
+age2 <- (Population[, .(人口數比例 = 人口數 / sum(人口數), Age)]
+                   [, .(Freq = nrow(SampleRK) * sum(人口數比例)), by = .(Age)])
+
+unweighted <- svydesign(ids = ~ 0, data = SampleRK)
+raking <- rake(design = unweighted, sample.margins = list(~ Sex, ~ Age), 
+               population.margins = list(sex2, age2))
+SampleRK$weights <- weights(raking)
 ```
 
-透過卡方檢定的結果可以發現，無論是性別或是年齡組，p-value都大於0.05，樣本與母體沒有顯著差異，多變項反覆加權就正式完成了。
+此時可以用卡方檢定來確認加權結果：
+
+```{r}
+chisq.test(wpct(SampleRK$Sex, SampleRK$weights) * nrow(SampleRK), p = as.numeric(sex[1, ]))
+chisq.test(wpct(SampleRK$Age, SampleRK$weights) * nrow(SampleRK), p = as.numeric(age[1, ]))
+```
+
+### 手動反覆加權
+
+手動反覆加權需要利用前述的公式逐一計算各個變項的權數，首先計算性別的權數：
+
+```{r, warning=FALSE}
+S <- prop.table(table(SampleRK$Sex)) |> data.frame() |> t()
+sexW <- data.frame(Sex = c('男', '女'),
+                   WS = as.numeric(sex[1, ]) / as.numeric(S[2, ]))
+SampleRK <- merge(SampleRK, sexW, by = 'Sex')
+SampleRK[, Sex := factor(Sex, levels = c('男', '女'))]
+```
+
+```{r}
+chisq.test(wpct(SampleRK$Sex, SampleRK$WS) * nrow(SampleRK), p = as.numeric(sex[1, ]))
+chisq.test(wpct(SampleRK$Age, SampleRK$WS) * nrow(SampleRK), p = as.numeric(age[1, ]))
+```
+
+在加權完性別以後，可以發現性別與母體分佈已經沒有顯著差異，但年齡仍有差異，因此進行年齡的加權：
+
+```{r}
+SexAgeCount <- SampleRK[, .(.N), by = .(Age, Sex)]
+AgeProb <- merge(SexAgeCount, sexW)
+AgeProb <- AgeProb[, N := N * WS][, .(N = sum(N)), by = .(Age)][, ProbA := N / sum(N)]
+
+A <- Population[, .(人口數比例 = 人口數 / sum(人口數), Age)][, .(FreqA = sum(人口數比例)), by = .(Age)]
+ageW <- merge(AgeProb, A)
+ageW <- ageW[, .(Age, WA = FreqA / ProbA)]
+
+SampleRK <- merge(SampleRK, ageW)
+```
+
+在加權玩年齡以後，可以看到年齡和母體分佈沒有差異，但性別有差異：
+
+```{r}
+chisq.test(wpct(SampleRK$Sex, SampleRK$WA) * nrow(SampleRK), p = as.numeric(sex[1, ]))
+chisq.test(wpct(SampleRK$Age, SampleRK$WA) * nrow(SampleRK), p = as.numeric(age[1, ]))
+```
+
+接下來將性別與年齡的權數相乘，得到總權數：
+
+```{r}
+SampleRK[, weights2 := WS * WA]
+```
+
+使用總權數進行卡方檢定：
+
+```{r}
+chisq.test(wpct(SampleRK$Sex, SampleRK$weights2) * nrow(SampleRK), p = as.numeric(sex[1, ]))
+chisq.test(wpct(SampleRK$Age, SampleRK$weights2) * nrow(SampleRK), p = as.numeric(age[1, ]))
+```
+
+根據卡方檢定的結果，可以看到在對兩個變項分別進行加權以後，樣本與母體已經沒有顯著差異。
+
+### 挑選變項檢視分佈-v41台灣社會發展
+
+```{r}
+table(SampleRK$TW)
+(wpct(SampleRK$TW, SampleRK$weights2) * nrow(SampleRK)) |> round(1)
+```
 
 ## 檢驗駕照持有人數
+
+```{r, echo=FALSE}
+path3 <- '/Users/kyle/Desktop/NCCU/社會調查師/R-Data-Processing/DataSets/'
+```
+
+此處使用政府資料開放平臺上行政院交通部發布之「**領有駕駛執照人數**」資料集來作為駕照母體資料，並按性別及年齡層計算人數
+
+```{r, warning=FALSE}
+license <- xmlToDataFrame(paste0(path3, '領有駕駛執照人數2.XML')) |> setDT()
+license <- (license[Category1Title == '小型車普通駕駛人' & Category2Title %in% c('男', '女') & Category3Title != '計', ]
+                   [, ":="(Sex = factor(Category2Title, levels = c('男', '女')),
+                           Age = Recode(Category3Title, "c('未滿20歲', '20-未滿25歲', '25-未滿30歲')='18-29歲';
+                                                         c('30-未滿35歲', '35-未滿40歲')='30-39歲';
+                                                         c('40-未滿45歲', '45-未滿50歲')='40-49歲';
+                                                         c('50-未滿55歲', '55-未滿60歲')='50-59歲';
+                                                         '60歲以上'='60歲以上'"))])
+```
+
+由於資料集的年齡將60歲以上分為一組，因此需要重新編碼：
+
+```{r}
+SampleRK$Age2 <- ifelse(SampleRK$Age %in% c('60-69歲', '70歲以上'), '60歲以上', SampleRK$Age)
+```
+
+接著計算出母體及樣本的人數：
+
+```{r}
+license <- license[Period == '11000', .(人數 = sum(as.numeric(Val))), keyby = .(Sex, Age)][, 比例 := 人數 / sum(人數)]
+license[]
+
+SampleL <- SampleRK[License == 1, .(人數 = .N, 加權人數 = sum(weights)), keyby = .(Sex, Age2)]
+SampleL
+```
+
+使用卡方檢定比較加權前後的分佈情形：
+
+```{r}
+chisq.test(SampleL$人數, p = license$比例)
+chisq.test(SampleL$加權人數, p = license$比例)
+```
+
+加權後的p-value顯示樣本與母體的差異已經改善。
+
+另外還可以比較全體樣本有無駕照的比例：
+
+```{r}
+l.Sample <- SampleRK[License != 97, ]
+l.Unweighted <- table(l.Sample$License)
+l.Unweighted
+l.Weighted <- wpct(l.Sample$License, l.Sample$weights2) * nrow(l.Sample)
+l.Weighted
+
+l.Yes <- sum(license$人數) / sum(Population$人口數)
+l.No <- (sum(Population$人口數) - sum(license$人數)) / sum(Population$人口數)
+
+l.exp <- data.frame(有駕照 = l.Yes * nrow(l.Sample), 沒駕照 = l.No * nrow(l.Sample))
+l.exp
+```
+
+```{r}
+chisq.test(l.Unweighted, p = c(l.Yes, l.No))
+chisq.test(l.Weighted, p = c(l.Yes, l.No))
+```
+
+檢定的結果顯示無論加權與否，駕照持有率跟母體都有顯著差異，加權後的差異可能更大，因此可以對駕照進行加權：
+
+```{r}
+
+```
