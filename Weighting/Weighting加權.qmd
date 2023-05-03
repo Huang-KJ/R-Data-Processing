@@ -1,21 +1,25 @@
 ---
+title: "加權（Weighting）"
+date: 2023-05-03
+author:
+- 109204035 社會三 黃楷捷
 format: 
   html: 
     toc: true
     toc-title: Contents
     toc-location: right
     page-layout: full
-    #code-overflow: wrap
+    code-overflow: wrap
 editor: visual
 editor_options: 
   chunk_output_type: inline
 ---
 
-# 加權（Weighting）
+## 簡介
 
 **加權**是將樣本資料根據特定變項給予新的權數，以調整每個樣本佔整體資料的比例。
 
-## 套件與資料
+### 套件與資料
 
 本文使用到的套件如下：
 
@@ -288,11 +292,13 @@ SampleRK$Age2 <- ifelse(SampleRK$Age %in% c('60-69歲', '70歲以上'), '60歲�
 接著計算出母體及樣本的人數：
 
 ```{r}
-license <- license[Period == '11000', .(人數 = sum(as.numeric(Val))), keyby = .(Sex, Age)][, 比例 := 人數 / sum(人數)]
-license[]
-
 SampleL <- SampleRK[License == 1, .(人數 = .N, 加權人數 = sum(weights)), keyby = .(Sex, Age2)]
 SampleL
+
+license <- (license[Period == '11000', .(人數 = sum(as.numeric(Val))), keyby = .(Sex, Age)]
+                   [, 比例 := 人數 / sum(人數)]
+                   [, 期望值 := 比例 * nrow(SampleRK[License == 1, ])])
+license[]
 ```
 
 使用卡方檢定比較加權前後的分佈情形：
@@ -308,14 +314,19 @@ chisq.test(SampleL$加權人數, p = license$比例)
 
 ```{r}
 l.Sample <- SampleRK[License != 97, ]
+
+#有無駕照比例_未加權
 l.Unweighted <- table(l.Sample$License)
 l.Unweighted
+
+#有無駕照比例_加權
 l.Weighted <- wpct(l.Sample$License, l.Sample$weights2) * nrow(l.Sample)
 l.Weighted
 
 l.Yes <- sum(license$人數) / sum(Population$人口數)
 l.No <- (sum(Population$人口數) - sum(license$人數)) / sum(Population$人口數)
 
+#有無駕照比例_期望值
 l.exp <- data.frame(有駕照 = l.Yes * nrow(l.Sample), 沒駕照 = l.No * nrow(l.Sample))
 l.exp
 ```
@@ -323,10 +334,4 @@ l.exp
 ```{r}
 chisq.test(l.Unweighted, p = c(l.Yes, l.No))
 chisq.test(l.Weighted, p = c(l.Yes, l.No))
-```
-
-檢定的結果顯示無論加權與否，駕照持有率跟母體都有顯著差異，加權後的差異可能更大，因此可以對駕照進行加權：
-
-```{r}
-
 ```

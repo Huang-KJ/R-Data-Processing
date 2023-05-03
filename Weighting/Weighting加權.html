@@ -6,8 +6,10 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="author" content="109204035 社會三 黃楷捷">
+<meta name="dcterms.date" content="2023-05-03">
 
-<title>weighting加權</title>
+<title>加權（Weighting）</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -109,10 +111,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
     <h2 id="toc-title">Contents</h2>
    
   <ul>
-  <li><a href="#加權weighting" id="toc-加權weighting" class="nav-link active" data-scroll-target="#加權weighting">加權（Weighting）</a>
+  <li><a href="#簡介" id="toc-簡介" class="nav-link active" data-scroll-target="#簡介">簡介</a>
   <ul class="collapse">
-  <li><a href="#套件與資料" id="toc-套件與資料" class="nav-link" data-scroll-target="#套件與資料">套件與資料</a>
-  <ul class="collapse">
+  <li><a href="#套件與資料" id="toc-套件與資料" class="nav-link" data-scroll-target="#套件與資料">套件與資料</a></li>
   <li><a href="#樣本資料" id="toc-樣本資料" class="nav-link" data-scroll-target="#樣本資料">樣本資料</a></li>
   <li><a href="#母體資料" id="toc-母體資料" class="nav-link" data-scroll-target="#母體資料">母體資料</a></li>
   <li><a href="#使用卡方檢定檢查分佈情形" id="toc-使用卡方檢定檢查分佈情形" class="nav-link" data-scroll-target="#使用卡方檢定檢查分佈情形">使用卡方檢定檢查分佈情形</a></li>
@@ -129,19 +130,45 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <li><a href="#挑選變項檢視分佈-v41台灣社會發展-1" id="toc-挑選變項檢視分佈-v41台灣社會發展-1" class="nav-link" data-scroll-target="#挑選變項檢視分佈-v41台灣社會發展-1">挑選變項檢視分佈-v41台灣社會發展</a></li>
   </ul></li>
   <li><a href="#檢驗駕照持有人數" id="toc-檢驗駕照持有人數" class="nav-link" data-scroll-target="#檢驗駕照持有人數">檢驗駕照持有人數</a></li>
-  </ul></li>
   </ul>
 </nav>
 </div>
 <main class="content column-page-left" id="quarto-document-content">
 
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">加權（Weighting）</h1>
+</div>
 
 
-<section id="加權weighting" class="level1">
-<h1>加權（Weighting）</h1>
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>109204035 社會三 黃楷捷 </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">May 3, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="簡介" class="level2">
+<h2 class="anchored" data-anchor-id="簡介">簡介</h2>
 <p><strong>加權</strong>是將樣本資料根據特定變項給予新的權數，以調整每個樣本佔整體資料的比例。</p>
-<section id="套件與資料" class="level2">
-<h2 class="anchored" data-anchor-id="套件與資料">套件與資料</h2>
+<section id="套件與資料" class="level3">
+<h3 class="anchored" data-anchor-id="套件與資料">套件與資料</h3>
 <p>本文使用到的套件如下：</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(car) <span class="co">#重新編碼</span></span>
@@ -154,6 +181,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr) <span class="co">#String manipulation</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+</section>
 <section id="樣本資料" class="level3">
 <h3 class="anchored" data-anchor-id="樣本資料">樣本資料</h3>
 <p>此處我們使用2020台灣社會變遷綜合問卷進行示範</p>
@@ -502,23 +530,8 @@ X-squared = 0.49974, df = 5, p-value = 0.9921</code></pre>
 </div>
 <p>接著計算出母體及樣本的人數：</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>license <span class="ot">&lt;-</span> license[Period <span class="sc">==</span> <span class="st">'11000'</span>, .(人數 <span class="ot">=</span> <span class="fu">sum</span>(<span class="fu">as.numeric</span>(Val))), keyby <span class="ot">=</span> .(Sex, Age)][, 比例 <span class="sc">:</span><span class="er">=</span> 人數 <span class="sc">/</span> <span class="fu">sum</span>(人數)]</span>
-<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>license[]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>    Sex      Age    人數       比例
- 1:  男  18-29歲 1190837 0.09059562
- 2:  男  30-39歲 1391429 0.10585612
- 3:  男  40-49歲 1414489 0.10761046
- 4:  男  50-59歲 1289305 0.09808680
- 5:  男 60歲以上 1718989 0.13077599
- 6:  女  18-29歲  876438 0.06667701
- 7:  女  30-39歲 1294934 0.09851504
- 8:  女  40-49歲 1544860 0.11752873
- 9:  女  50-59歲 1337533 0.10175586
-10:  女 60歲以上 1085717 0.08259838</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>SampleL <span class="ot">&lt;-</span> SampleRK[License <span class="sc">==</span> <span class="dv">1</span>, .(人數 <span class="ot">=</span> .N, 加權人數 <span class="ot">=</span> <span class="fu">sum</span>(weights)), keyby <span class="ot">=</span> .(Sex, Age2)]</span>
-<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>SampleL</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>SampleL <span class="ot">&lt;-</span> SampleRK[License <span class="sc">==</span> <span class="dv">1</span>, .(人數 <span class="ot">=</span> .N, 加權人數 <span class="ot">=</span> <span class="fu">sum</span>(weights)), keyby <span class="ot">=</span> .(Sex, Age2)]</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>SampleL</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>    Sex     Age2 人數  加權人數
  1:  男  18-29歲   88 130.60355
@@ -531,6 +544,23 @@ X-squared = 0.49974, df = 5, p-value = 0.9921</code></pre>
  8:  女  40-49歲  141 136.17557
  9:  女  50-59歲  156 130.22710
 10:  女 60歲以上  128 107.45957</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>license <span class="ot">&lt;-</span> (license[Period <span class="sc">==</span> <span class="st">'11000'</span>, .(人數 <span class="ot">=</span> <span class="fu">sum</span>(<span class="fu">as.numeric</span>(Val))), <span class="at">keyby =</span> .(Sex, Age)]</span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>                   [, 比例 <span class="sc">:</span><span class="er">=</span> 人數 <span class="sc">/</span> <span class="fu">sum</span>(人數)]</span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>                   [, 期望值 <span class="sc">:</span><span class="er">=</span> 比例 <span class="sc">*</span> <span class="fu">nrow</span>(SampleRK[License <span class="sc">==</span> <span class="dv">1</span>, ])])</span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>license[]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    Sex      Age    人數       比例    期望值
+ 1:  男  18-29歲 1190837 0.09059562 116.86836
+ 2:  男  30-39歲 1391429 0.10585612 136.55439
+ 3:  男  40-49歲 1414489 0.10761046 138.81749
+ 4:  男  50-59歲 1289305 0.09808680 126.53197
+ 5:  男 60歲以上 1718989 0.13077599 168.70102
+ 6:  女  18-29歲  876438 0.06667701  86.01334
+ 7:  女  30-39歲 1294934 0.09851504 127.08440
+ 8:  女  40-49歲 1544860 0.11752873 151.61206
+ 9:  女  50-59歲 1337533 0.10175586 131.26505
+10:  女 60歲以上 1085717 0.08259838 106.55191</code></pre>
 </div>
 </div>
 <p>使用卡方檢定比較加權前後的分佈情形：</p>
@@ -556,15 +586,18 @@ X-squared = 12.696, df = 9, p-value = 0.1769</code></pre>
 <p>另外還可以比較全體樣本有無駕照的比例：</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>l.Sample <span class="ot">&lt;-</span> SampleRK[License <span class="sc">!=</span> <span class="dv">97</span>, ]</span>
-<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>l.Unweighted <span class="ot">&lt;-</span> <span class="fu">table</span>(l.Sample<span class="sc">$</span>License)</span>
-<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>l.Unweighted</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a><span class="co">#有無駕照比例_未加權</span></span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a>l.Unweighted <span class="ot">&lt;-</span> <span class="fu">table</span>(l.Sample<span class="sc">$</span>License)</span>
+<span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a>l.Unweighted</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
    1    2 
 1290  564 </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>l.Weighted <span class="ot">&lt;-</span> <span class="fu">wpct</span>(l.Sample<span class="sc">$</span>License, l.Sample<span class="sc">$</span>weights2) <span class="sc">*</span> <span class="fu">nrow</span>(l.Sample)</span>
-<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>l.Weighted</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="co">#有無駕照比例_加權</span></span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>l.Weighted <span class="ot">&lt;-</span> <span class="fu">wpct</span>(l.Sample<span class="sc">$</span>License, l.Sample<span class="sc">$</span>weights2) <span class="sc">*</span> <span class="fu">nrow</span>(l.Sample)</span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>l.Weighted</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>        1         2 
 1312.2874  541.7126 </code></pre>
@@ -572,8 +605,9 @@ X-squared = 12.696, df = 9, p-value = 0.1769</code></pre>
 <div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>l.Yes <span class="ot">&lt;-</span> <span class="fu">sum</span>(license<span class="sc">$</span>人數) <span class="sc">/</span> <span class="fu">sum</span>(Population<span class="sc">$</span>人口數)</span>
 <span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>l.No <span class="ot">&lt;-</span> (<span class="fu">sum</span>(Population<span class="sc">$</span>人口數) <span class="sc">-</span> <span class="fu">sum</span>(license<span class="sc">$</span>人數)) <span class="sc">/</span> <span class="fu">sum</span>(Population<span class="sc">$</span>人口數)</span>
 <span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a>l.exp <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(有駕照 <span class="ot">=</span> l.Yes <span class="sc">*</span> <span class="fu">nrow</span>(l.Sample), 沒駕照 <span class="ot">=</span> l.No <span class="sc">*</span> <span class="fu">nrow</span>(l.Sample))</span>
-<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a>l.exp</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a><span class="co">#有無駕照比例_期望值</span></span>
+<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a>l.exp <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(有駕照 <span class="ot">=</span> l.Yes <span class="sc">*</span> <span class="fu">nrow</span>(l.Sample), 沒駕照 <span class="ot">=</span> l.No <span class="sc">*</span> <span class="fu">nrow</span>(l.Sample))</span>
+<span id="cb62-6"><a href="#cb62-6" aria-hidden="true" tabindex="-1"></a>l.exp</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>    有駕照   沒駕照
 1 1221.842 632.1583</code></pre>
@@ -597,11 +631,6 @@ data:  l.Weighted
 X-squared = 19.636, df = 1, p-value = 9.37e-06</code></pre>
 </div>
 </div>
-<p>檢定的結果顯示無論加權與否，駕照持有率跟母體都有顯著差異，加權後的差異可能更大，因此可以對駕照進行加權：</p>
-<div class="cell">
-
-</div>
-</section>
 </section>
 
 </main>
