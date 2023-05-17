@@ -43,7 +43,8 @@ ggplot() +
     geom_boxplot(data = tscs191, aes(x = factor(民法, c(1:5), c('支持的人多很多', '支持的人多一些', '一半一半',
                                                                 '反對的人多一些', '反對的人多很多')),
                                      y = Age)) +
-    labs(title = '對於目前民法限定婚姻在一男一女的結合，請問您在網路上的朋友，\n是支持的多，還是反對的多?', x = '朋友支持度', y = '年齡') +
+    labs(title = '對於目前民法限定婚姻在一男一女的結合，請問您在網路上的朋友，\n是支持的多，還是反對的多?',
+         x = '朋友支持度', y = '年齡') +
     theme(plot.title = element_text(size = 25, hjust = 0.5, face ="bold"),
           axis.title = element_text(size = 20),
           axis.text = element_text(size = 15))
