@@ -1,15 +1,13 @@
 library(car)
-library(descr)
 library(haven)
 library(dplyr)
-library(ggplot2)
 library(data.table)
 tscs191 <- read_sav("~/Desktop/NCCU/111-2/三1234社會研究方法/HW/tscs191.sav") |> setDT()
 
 tscs191 <- (tscs191[, Sex := factor(a1, levels = c(1:2), labels = c('男', '女'))]
                    [, Age := ifelse(a2y <= 100,  108 - a2y, ifelse(a2r <= 100, a2r, NA))]
                    [, 民法 := ifelse(d18 > 5, NA, d18)]
-                   [!is.na(民法) & !d11 %in% c(96, 98, 99),]
+                   [!is.na(民法) & !d11 %in% c(96, 98, 99), ]
                    [, 媒體 := Recode(as.numeric(d11), "1='FB'; 2='LINE'; 3='IG';
                                                        6='YT'; c(4, 5, 7)='其他';
                                                        8='都沒有'") |> factor()]
@@ -36,5 +34,15 @@ durbinWatsonTest(model3)
 #殘差同質性檢定
 ncvTest(model3)
 
-model <- lm(data = tscs191, formula = 民法 ~ LINE + IG + YT + 其他 + 都沒有)
+model <- lm(data = tscs191, formula = 民法 ~ Sex + 媒體 + Age)
+#model <- lm(data = tscs191, formula = 民法 ~ 0 + FB + LINE + IG + YT + 其他 + 都沒有)
+car::vif(model)
+
+
 summary(model)
+anova(model)
+coefficients(model)
+confint(model)
+vcov(model)
+AIC(model)
+plot(model)
