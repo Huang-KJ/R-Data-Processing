@@ -15,7 +15,7 @@ tscs191 <- (tscs191[, Sex := factor(a1, levels = c(1:2), labels = c('男', '女'
                            IG = ifelse(d11 == 3, 1, 0), YT = ifelse(d11 == 6, 1, 0),
                            其他 = ifelse(d11 %in% c(4, 5, 7), 1, 0),
                            都沒有 = ifelse(d11 == 8, 1, 0))])
-
+tscs191$wr_19_4
 model1 <- lm(data = tscs191, formula = 民法 ~ Sex)
 summary(model1)
 
